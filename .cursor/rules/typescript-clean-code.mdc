@@ -1,0 +1,119 @@
+---
+description: TypeScript clean code standards and idioms for this project
+globs: "**/*.ts"
+alwaysApply: false
+---
+
+# TypeScript Clean Code Standards
+
+## Types & Interfaces
+
+- **Prefer `interface` over `type`** for object shapes (interfaces are extendable and give clearer error messages). Use `type` for unions, intersections, and mapped types.
+- **Never use `any`**. Use `unknown` when the type is truly unknown, then narrow with type guards.
+- **Use explicit return types** on exported functions. Inferred types are fine for private/local helpers.
+- **Use `readonly`** for properties and arrays that should not be mutated.
+
+```typescript
+// BAD
+function parse(data: any): any { ... }
+
+// GOOD
+function parse(data: unknown): ParsedResult { ... }
+```
+
+## Naming Conventions
+
+| Construct | Convention | Example |
+|-----------|-----------|---------|
+| Variables, functions, parameters | `camelCase` | `testCount`, `parseTrxXml` |
+| Interfaces & types | `PascalCase` (no `I` prefix) | `TestResult`, `FilterResult` |
+| Enums & enum members | `PascalCase` | `TestState.Passed` |
+| Constants | `UPPER_SNAKE_CASE` or `camelCase` | `MAX_RETRIES`, `defaultTimeout` |
+| Private fields | prefix with `_` when needed | `_disposables` |
+| Boolean variables | use `is`, `has`, `can`, `should` | `isRunning`, `hasChildren` |
+
+## Functions
+
+- Keep functions **small and single-purpose** (under ~30 lines).
+- Use **arrow functions** for callbacks and short lambdas. Use `function` declarations for top-level/exported functions.
+- Prefer **early returns** over deeply nested `if/else`.
+- Use **destructuring** for function parameters when there are 3+ related options.
+
+```typescript
+// BAD — deeply nested
+function process(items: Item[]) {
+    if (items.length > 0) {
+        for (const item of items) {
+            if (item.isValid) {
+                // ...deep nesting
+            }
+        }
+    }
+}
+
+// GOOD — early return, flat
+function process(items: Item[]) {
+    if (items.length === 0) { return; }
+
+    for (const item of items) {
+        if (!item.isValid) { continue; }
+        // ...flat logic
+    }
+}
+```
+
+## Null & Undefined
+
+- Use **`undefined`** (not `null`) as the default "no value" in TypeScript. Use `null` only when interfacing with APIs that require it.
+- Use **optional chaining (`?.`)** and **nullish coalescing (`??`)** instead of manual checks.
+- Mark optional properties/parameters with `?` rather than `| undefined`.
+
+```typescript
+// BAD
+const name = result !== null && result !== undefined ? result.name : 'Unknown';
+
+// GOOD
+const name = result?.name ?? 'Unknown';
+```
+
+## Collections & Iteration
+
+- Prefer **`for...of`** over index-based `for` loops.
+- Use **`Map`** and **`Set`** for key-value lookups and uniqueness (not plain objects).
+- Use **array methods** (`.map`, `.filter`, `.find`, `.some`, `.every`) for declarative transforms. Avoid `.forEach` — use `for...of` when you need side effects.
+- Use **`.some()`** or **`.find()`** instead of `.filter().length > 0`.
+
+## Async / Await
+
+- Always **`await`** promises — never leave floating promises without handling.
+- **Never use `.then()` chains** when `async/await` is available.
+- Handle errors with **`try/catch`** around `await` calls, catching specific error types when possible.
+- Return the promise directly if no further processing is needed (skip redundant `await` in a `return`).
+
+## Error Handling
+
+- **Never swallow errors** with empty `catch {}` blocks.
+- Throw **`Error` subclasses** with descriptive messages.
+- Use `unknown` for `catch` parameter type and narrow with `instanceof`.
+
+```typescript
+try {
+    await loadConfig();
+} catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    logError('Config load failed', message);
+    throw err;
+}
+```
+
+## Modules & Imports
+
+- Use **ES module syntax** (`import`/`export`), never `require` (except dynamic lazy-loading).
+- Group imports: Node built-ins, then external packages, then internal modules — separated by blank lines.
+- **Export only what is needed** — keep internal helpers unexported.
+
+## Immutability
+
+- Prefer **`const`** over `let`. Never use `var`.
+- Use **`readonly`** arrays and properties where mutation is not needed.
+- Use **spread syntax** (`{ ...obj, key: newValue }`) to create modified copies instead of mutating.

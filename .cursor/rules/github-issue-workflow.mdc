@@ -1,0 +1,70 @@
+---
+description: Git branching and commit conventions when working with GitHub issues
+alwaysApply: true
+---
+
+# GitHub Issue Workflow
+
+When taking a GitHub issue, follow this workflow strictly.
+
+## 1. Branch Creation
+
+Always branch from the latest `main`:
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b <type>/<issue-number>-<short-description>
+```
+
+### Branch Prefixes
+
+| Prefix      | When to use                          |
+|-------------|--------------------------------------|
+| `feature/`  | New functionality                    |
+| `bugfix/`   | Bug fixes                            |
+| `hotfix/`   | Urgent production fixes              |
+| `chore/`    | Maintenance, tooling, CI changes     |
+| `refactor/` | Code restructuring, no behavior change |
+| `docs/`     | Documentation only                   |
+| `test/`     | Adding or fixing tests               |
+
+### Branch Name Rules
+
+- Use **kebab-case** for the short description.
+- Keep it concise (3-5 words max).
+- Always include the issue number.
+
+**Examples:**
+
+- `feature/42-add-user-profile`
+- `bugfix/108-fix-login-timeout`
+- `hotfix/7-null-ref-on-startup`
+- `refactor/55-extract-order-service`
+
+## 2. Commits — Conventional Commits
+
+Follow the [Conventional Commits](https://www.conventionalcommits.org/) spec:
+
+```
+<type>(optional-scope): <description>
+```
+
+- `feat:` — new feature (maps to SemVer minor)
+- `fix:` — bug fix (maps to SemVer patch)
+- `refactor:` — restructure without behavior change
+- `chore:` — tooling, deps, CI
+- `docs:` — documentation only
+- `test:` — adding or updating tests
+
+**Examples:**
+
+- `feat(auth): add JWT token refresh`
+- `fix: resolve null reference in OrderService`
+- `test: add unit tests for CartService`
+
+## 3. Pull Request
+
+- Reference the issue using a closing keyword: `Closes #<issue-number>`.
+- PR title should follow Conventional Commits format.
+- Include a summary and test plan in the PR body.

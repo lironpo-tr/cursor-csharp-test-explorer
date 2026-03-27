@@ -1,0 +1,40 @@
+---
+description: Code review checklist for this VS Code extension project
+globs: "**/*.ts"
+alwaysApply: false
+---
+
+# Code Review Checklist
+
+## VS Code Extension API
+
+- Disposables returned by `vscode.*` APIs must be tracked and disposed (push to a `disposables` array or use `context.subscriptions`).
+- Never call `vscode.window.*` or `vscode.commands.*` without checking for cancellation in long-running flows.
+- TreeDataProvider changes must fire `onDidChangeTreeData` — verify the correct overload (single node vs full refresh).
+- Respect `CancellationToken` in all async operations — check `token.isCancellationRequested` before expensive work.
+
+## Async & Process Safety
+
+- External process calls (`dotnet test`, `dotnet build`) must be cancellable and have timeout handling.
+- Temp files/directories created during test runs must be cleaned up in a `finally` block (best-effort `fs.rm`).
+- Never use `.Result` or `.Wait()` equivalents — always `await`.
+- Floating promises must be intentional and documented (e.g., fire-and-forget cleanup with `.catch(() => {})`).
+
+## Test Result Matching
+
+- TRX test names may differ from discovered FQNs in whitespace, parameter formatting, or qualification level — always use `normalizeTestName` for comparisons.
+- New matching logic must handle both fully-qualified names and short names (suffix matching via `.endsWith`).
+- Dynamic node creation (`addDynamicCaseNode`) is a fallback — verify the primary matching path is attempted first.
+
+## Tree Integrity
+
+- State changes on nodes must call `refreshNode` (not just set `.state`) to trigger UI updates and `propagateStateUp`.
+- `clearRunningStates` must be called in `finishRun` to avoid nodes stuck in "running" after cancellation or errors.
+- Verify new node types are handled in `getIcon`, `getTooltip`, `collectMethodNodes`, and `getAllMethodNodes`.
+
+## Testing
+
+- Every new public function must have corresponding unit tests.
+- Test names follow `functionName_stateUnderTest_expectedBehavior` convention.
+- Use AAA pattern (Arrange / Act / Assert) with blank line separators.
+- Mock `vscode` APIs via the existing `test/__mocks__/vscode.ts` — never import the real `vscode` module in tests.

@@ -9,6 +9,17 @@ import { runDotnet, getExtraArgs } from './utils/dotnetCli';
 import { parseTrxFile } from './execution/trxParser';
 import { log, logError, showOutput } from './utils/outputChannel';
 
+/**
+ * Normalizes parameter formatting in test names for comparison.
+ * TRX output and source-code discovery may differ in whitespace within parameter lists
+ * (e.g., "Method(1, 2)" vs "Method(1,2)").
+ */
+export function normalizeTestName(name: string): string {
+    const parenIdx = name.indexOf('(');
+    if (parenIdx === -1) { return name; }
+    return name.substring(0, parenIdx) + name.substring(parenIdx).replace(/,\s+/g, ',');
+}
+
 export class CSharpTestController implements vscode.Disposable {
     readonly treeProvider: TestTreeProvider;
     private readonly statusBar: vscode.StatusBarItem;
@@ -294,10 +305,10 @@ export class CSharpTestController implements vscode.Disposable {
         try {
             const summary = await parseTrxFile(trxPath);
 
-            // Build lookup maps for flexible matching
+            // Build lookup maps for flexible matching (strip params so parameterized cases group by base method name)
             const methodsByName = new Map<string, TestTreeNode[]>();
             for (const m of methodNodes) {
-                const shortName = m.fqn.split('.').pop() ?? m.fqn;
+                const shortName = m.fqn.replace(/\(.*\)$/, '').split('.').pop() ?? m.fqn;
                 const list = methodsByName.get(shortName) ?? [];
                 list.push(m);
                 methodsByName.set(shortName, list);
@@ -381,8 +392,10 @@ export class CSharpTestController implements vscode.Disposable {
         details: { errorMessage?: string; stackTrace?: string; duration?: number },
         candidates: TestTreeNode[]
     ): boolean {
+        const normalized = normalizeTestName(name);
         for (const node of candidates) {
-            if (node.fqn === name || node.fqn.endsWith(`.${name}`)) {
+            const normalizedFqn = normalizeTestName(node.fqn);
+            if (normalizedFqn === normalized || normalizedFqn.endsWith(`.${normalized}`)) {
                 this.applyState(node, state, details);
                 return true;
             }

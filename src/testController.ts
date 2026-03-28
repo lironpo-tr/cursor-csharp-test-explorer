@@ -126,13 +126,7 @@ export class CSharpTestController implements vscode.Disposable {
         } catch (err) {
             if (!this.isCancelError(err)) {
                 logError('Run failed', err);
-                for (const m of methodNodes) {
-                    if (m.state === 'running') {
-                        this.applyState(m, 'failed', {
-                            errorMessage: err instanceof Error ? err.message : String(err),
-                        });
-                    }
-                }
+                this.markRunningNodesAsFailed(node, err);
             }
         } finally {
             this.finishRun();
@@ -147,14 +141,19 @@ export class CSharpTestController implements vscode.Disposable {
         }
         this.treeProvider.refresh();
 
+        const token = this.activeCts!.token;
         try {
             for (const root of this.treeProvider.getRoots()) {
-                if (this.activeCts?.token.isCancellationRequested) { break; }
-                await this.executeTests(root, this.activeCts!.token);
-            }
-        } catch (err) {
-            if (!this.isCancelError(err)) {
-                logError('Run all failed', err);
+                if (token.isCancellationRequested) { break; }
+
+                try {
+                    await this.executeTests(root, token);
+                } catch (err) {
+                    if (this.isCancelError(err)) { break; }
+
+                    logError(`Run failed for project: ${root.label}`, err);
+                    this.markRunningNodesAsFailed(root, err);
+                }
             }
         } finally {
             this.finishRun();
@@ -295,7 +294,17 @@ export class CSharpTestController implements vscode.Disposable {
             args.push(...extraArgs);
         }
 
-        const result = await runDotnet(args, projectDir, token);
+        let result: Awaited<ReturnType<typeof runDotnet>>;
+        try {
+            result = await runDotnet(args, projectDir, token);
+        } catch (err) {
+            if (this.isCancelError(err)) { throw err; }
+
+            logError(`dotnet test failed to execute for ${node.label}`, err);
+            this.markRunningNodesAsFailed(node, err);
+            fs.rm(trxDir, { recursive: true }).catch(() => {});
+            return;
+        }
 
         if (token.isCancellationRequested) { return; }
 
@@ -429,6 +438,17 @@ export class CSharpTestController implements vscode.Disposable {
                 return `FullyQualifiedName~${node.fqn}`;
             case 'project':
                 return undefined;
+        }
+    }
+
+    private markRunningNodesAsFailed(node: TestTreeNode, err: unknown): void {
+        const methodNodes = this.collectMethodNodes(node);
+        for (const m of methodNodes) {
+            if (m.state === 'running') {
+                this.applyState(m, 'failed', {
+                    errorMessage: err instanceof Error ? err.message : String(err),
+                });
+            }
         }
     }
 

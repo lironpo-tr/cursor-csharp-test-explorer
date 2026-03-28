@@ -54,6 +54,8 @@ src/
 - `csharpTestExplorer.showOutput` — open the output channel
 - `csharpTestExplorer.goToTest` — navigate to a test's source location
 - `csharpTestExplorer.stopRun` — cancel an in-progress test run
+- `csharpTestExplorer.filterTests` — filter the test tree by name (case-insensitive substring)
+- `csharpTestExplorer.clearFilter` — remove the active filter and restore the full tree
 
 ## Keeping This Rule Up-to-Date
 

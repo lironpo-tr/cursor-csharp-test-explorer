@@ -91,6 +91,20 @@
                 "description": "Cancel the currently running test execution",
                 "category": "C# Test Explorer",
                 "icon": "$(debug-stop)"
+            },
+            {
+                "command": "csharpTestExplorer.filterTests",
+                "title": "Filter Tests",
+                "description": "Filter the test tree by name (case-insensitive substring match)",
+                "category": "C# Test Explorer",
+                "icon": "$(search)"
+            },
+            {
+                "command": "csharpTestExplorer.clearFilter",
+                "title": "Clear Filter",
+                "description": "Remove the active test filter and restore the full tree",
+                "category": "C# Test Explorer",
+                "icon": "$(close)"
             }
         ],
         "menus": {
@@ -114,6 +128,16 @@
                     "command": "csharpTestExplorer.showOutput",
                     "when": "view == csharpTestExplorerView",
                     "group": "navigation@3"
+                },
+                {
+                    "command": "csharpTestExplorer.filterTests",
+                    "when": "view == csharpTestExplorerView && !csharpTestExplorer.isFiltering",
+                    "group": "navigation@4"
+                },
+                {
+                    "command": "csharpTestExplorer.clearFilter",
+                    "when": "view == csharpTestExplorerView && csharpTestExplorer.isFiltering",
+                    "group": "navigation@4"
                 }
             ],
             "view/item/context": [

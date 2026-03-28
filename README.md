@@ -60,6 +60,8 @@ All commands are available from the **C# Tests** sidebar and the Command Palette
 | Show Output | Open the C# Test Explorer output channel |
 | Go to Test Source | Open the source file at the test method's line |
 | Stop Test Run | Cancel the currently running test execution |
+| Filter Tests | Filter the test tree by name (case-insensitive substring match) |
+| Clear Filter | Remove the active test filter and restore the full tree |
 <!-- AUTO:COMMANDS:END -->
 
 ## How It Works

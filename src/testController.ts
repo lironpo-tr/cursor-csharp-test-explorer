@@ -23,6 +23,8 @@ export class CSharpTestController implements vscode.Disposable {
     private projects: TestProject[] = [];
     private testsByProject = new Map<string, DiscoveredTest[]>();
 
+    private readonly treeView: vscode.TreeView<TestTreeNode>;
+
     constructor(
         private readonly context: vscode.ExtensionContext,
         private readonly logger: Logger,
@@ -30,16 +32,28 @@ export class CSharpTestController implements vscode.Disposable {
         this.treeProvider = new TestTreeProvider();
         this.statusBar = new StatusBarManager();
 
-        const treeView = vscode.window.createTreeView('csharpTestExplorerView', {
+        this.treeView = vscode.window.createTreeView('csharpTestExplorerView', {
             treeDataProvider: this.treeProvider,
             showCollapseAll: true,
         });
 
-        this.disposables.push(treeView, this.statusBar, this.treeProvider);
+        this.disposables.push(this.treeView, this.statusBar, this.treeProvider);
     }
 
     get running(): boolean {
         return this.isRunning;
+    }
+
+    applyFilter(query: string): void {
+        this.treeProvider.setFilter(query);
+        this.treeView.message = `Filter: "${query}"`;
+        vscode.commands.executeCommand('setContext', 'csharpTestExplorer.isFiltering', true);
+    }
+
+    clearFilter(): void {
+        this.treeProvider.clearFilter();
+        this.treeView.message = undefined;
+        vscode.commands.executeCommand('setContext', 'csharpTestExplorer.isFiltering', false);
     }
 
     stopRun(): void {

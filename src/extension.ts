@@ -52,6 +52,26 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         vscode.commands.registerCommand('csharpTestExplorer.stopRun', () => {
             controller?.stopRun();
         }),
+
+        vscode.commands.registerCommand('csharpTestExplorer.filterTests', async () => {
+            const query = await vscode.window.showInputBox({
+                prompt: 'Filter tests by name',
+                placeHolder: 'Type to filter (case-insensitive substring match)',
+                value: controller?.treeProvider.activeFilter ?? '',
+            });
+            if (query === undefined) {
+                return;
+            }
+            if (query === '') {
+                controller?.clearFilter();
+            } else {
+                controller?.applyFilter(query);
+            }
+        }),
+
+        vscode.commands.registerCommand('csharpTestExplorer.clearFilter', () => {
+            controller?.clearFilter();
+        }),
     );
 
     // File watcher: re-discover when .cs or .csproj files change

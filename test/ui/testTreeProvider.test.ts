@@ -470,6 +470,177 @@ describe('TestTreeProvider.getNodeById', () => {
     });
 });
 
+describe('TestTreeProvider filtering', () => {
+    it('should return only matching methods when filter is set', () => {
+        const provider = buildSingleProjectTree('Proj', [
+            makeTest('NS', 'Cls', 'LoginTest'),
+            makeTest('NS', 'Cls', 'LogoutTest'),
+            makeTest('NS', 'Cls', 'SignUpTest'),
+        ]);
+
+        provider.setFilter('login');
+
+        const roots = provider.getChildren();
+        expect(roots).toHaveLength(1);
+        const ns = provider.getChildren(roots[0]);
+        const cls = provider.getChildren(ns[0]);
+        const methods = provider.getChildren(cls[0]);
+        expect(methods).toHaveLength(1);
+        expect(methods[0].fqn).toBe('NS.Cls.LoginTest');
+    });
+
+    it('should be case-insensitive', () => {
+        const provider = buildSingleProjectTree('Proj', [
+            makeTest('NS', 'Cls', 'LoginTest'),
+            makeTest('NS', 'Cls', 'OtherTest'),
+        ]);
+
+        provider.setFilter('LOGIN');
+
+        const roots = provider.getChildren();
+        const ns = provider.getChildren(roots[0]);
+        const cls = provider.getChildren(ns[0]);
+        const methods = provider.getChildren(cls[0]);
+        expect(methods).toHaveLength(1);
+        expect(methods[0].fqn).toBe('NS.Cls.LoginTest');
+    });
+
+    it('should match on partial name (substring)', () => {
+        const provider = buildSingleProjectTree('Proj', [
+            makeTest('NS', 'Cls', 'CalculateTotal'),
+            makeTest('NS', 'Cls', 'CalculateDiscount'),
+            makeTest('NS', 'Cls', 'ValidateInput'),
+        ]);
+
+        provider.setFilter('calc');
+
+        const roots = provider.getChildren();
+        const ns = provider.getChildren(roots[0]);
+        const cls = provider.getChildren(ns[0]);
+        const methods = provider.getChildren(cls[0]);
+        expect(methods).toHaveLength(2);
+    });
+
+    it('should match on fully qualified name', () => {
+        const provider = buildSingleProjectTree('Proj', [
+            makeTest('App.Services', 'OrderService', 'PlaceOrder'),
+            makeTest('App.Utils', 'Helper', 'DoStuff'),
+        ]);
+
+        provider.setFilter('services');
+
+        const roots = provider.getChildren();
+        const namespaces = provider.getChildren(roots[0]);
+        expect(namespaces).toHaveLength(1);
+        expect(namespaces[0].fqn).toBe('App.Services');
+    });
+
+    it('should show ancestor chain for matching leaf nodes', () => {
+        const provider = buildSingleProjectTree('Proj', [
+            makeTest('Deep.Namespace', 'SomeClass', 'TargetTest'),
+            makeTest('Other', 'OtherClass', 'OtherTest'),
+        ]);
+
+        provider.setFilter('target');
+
+        const roots = provider.getChildren();
+        expect(roots).toHaveLength(1);
+        const ns = provider.getChildren(roots[0]);
+        expect(ns).toHaveLength(1);
+        expect(ns[0].fqn).toBe('Deep.Namespace');
+    });
+
+    it('should restore full tree when filter is cleared', () => {
+        const provider = buildSingleProjectTree('Proj', [
+            makeTest('NS', 'Cls', 'Test1'),
+            makeTest('NS', 'Cls', 'Test2'),
+            makeTest('NS', 'Cls', 'Test3'),
+        ]);
+
+        provider.setFilter('Test1');
+        provider.clearFilter();
+
+        const roots = provider.getChildren();
+        const ns = provider.getChildren(roots[0]);
+        const cls = provider.getChildren(ns[0]);
+        const methods = provider.getChildren(cls[0]);
+        expect(methods).toHaveLength(3);
+    });
+
+    it('should return empty tree when no tests match', () => {
+        const provider = buildSingleProjectTree('Proj', [
+            makeTest('NS', 'Cls', 'Test1'),
+        ]);
+
+        provider.setFilter('nonexistent');
+
+        const roots = provider.getChildren();
+        expect(roots).toHaveLength(0);
+    });
+
+    it('should expose the active filter via activeFilter getter', () => {
+        const provider = new TestTreeProvider();
+
+        expect(provider.activeFilter).toBe('');
+
+        provider.setFilter('Hello');
+        expect(provider.activeFilter).toBe('hello');
+
+        provider.clearFilter();
+        expect(provider.activeFilter).toBe('');
+    });
+
+    it('should filter parameterized cases by their display name', () => {
+        const provider = buildSingleProjectTree('Proj', [
+            makeTest('NS', 'Cls', 'Add', {
+                fullyQualifiedName: 'NS.Cls.Add(1,2)',
+                displayName: 'Add(1,2)',
+                parameters: '1,2',
+            }),
+            makeTest('NS', 'Cls', 'Add', {
+                fullyQualifiedName: 'NS.Cls.Add(3,4)',
+                displayName: 'Add(3,4)',
+                parameters: '3,4',
+            }),
+            makeTest('NS', 'Cls', 'Subtract', {
+                fullyQualifiedName: 'NS.Cls.Subtract(5,3)',
+                displayName: 'Subtract(5,3)',
+                parameters: '5,3',
+            }),
+        ]);
+
+        provider.setFilter('add');
+
+        const roots = provider.getChildren();
+        const ns = provider.getChildren(roots[0]);
+        const cls = provider.getChildren(ns[0]);
+        expect(cls[0].children.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should expand filtered nodes instead of collapsing them', () => {
+        const provider = buildSingleProjectTree('Proj', [
+            makeTest('NS', 'Cls', 'Test1'),
+        ]);
+
+        provider.setFilter('test1');
+        const root = provider.getChildren()[0];
+        const treeItem = provider.getTreeItem(root);
+
+        expect(treeItem.collapsibleState).toBe(2); // Expanded
+    });
+
+    it('should keep Collapsed state when no filter is active', () => {
+        const provider = buildSingleProjectTree('Proj', [
+            makeTest('NS', 'Cls', 'Test1'),
+        ]);
+
+        const root = provider.getChildren()[0];
+        const treeItem = provider.getTreeItem(root);
+
+        expect(treeItem.collapsibleState).toBe(1); // Collapsed
+    });
+});
+
 describe('TestTreeProvider.getTreeItem', () => {
     it('should return Collapsed state for nodes with children', () => {
         const provider = buildSingleProjectTree('Proj', [makeTest('NS', 'Cls', 'Test1')]);

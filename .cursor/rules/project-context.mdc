@@ -1,0 +1,69 @@
+---
+description: Project architecture and structure context
+globs: 
+alwaysApply: true
+---
+
+# Project Context — C# Test Explorer
+
+VS Code extension (TypeScript) that discovers, runs, and debugs C# tests (NUnit, xUnit, MSTest) via a sidebar tree view.
+
+## Tech Stack
+- TypeScript, VS Code Extension API (^1.85.0)
+- Build: esbuild, compiled to `out/`
+- Activated when workspace contains `*.csproj`
+
+## Architecture
+
+```
+src/
+├── extension.ts              # Entry point: activates CSharpTestController, registers commands
+├── testController.ts         # Core orchestrator: uses VS Code TestController API, wires discovery + execution
+├── testTreeProvider.ts       # TreeDataProvider for the sidebar test tree view
+├── discovery/
+│   ├── projectDetector.ts    # Finds .csproj files in the workspace
+│   ├── dotnetDiscoverer.ts   # Runs `dotnet test --list-tests` to discover tests
+│   └── sourceMapper.ts       # Maps discovered tests back to source file locations
+├── execution/
+│   ├── testRunner.ts         # Executes `dotnet test` with filters
+│   ├── filterBuilder.ts      # Builds --filter expressions for dotnet test
+│   ├── trxParser.ts          # Parses TRX result files
+│   └── resultMatcher.ts      # Matches TRX results back to TestItems
+├── debug/
+│   └── debugLauncher.ts      # Launches dotnet test with debugger attached
+├── ui/
+│   └── statusBarManager.ts   # Status bar indicator for test runs
+└── utils/
+    ├── outputChannel.ts      # Logging via VS Code OutputChannel
+    └── dotnetCli.ts          # Wrapper for spawning dotnet CLI processes
+```
+
+## Key Flows
+1. **Discovery**: projectDetector → dotnetDiscoverer → sourceMapper → testController builds TestItem tree
+2. **Execution**: testController → filterBuilder → testRunner → trxParser → resultMatcher → updates TestItem states
+3. **Debug**: testController → debugLauncher (attaches VS Code debugger to dotnet test process)
+
+## Commands (registered in extension.ts)
+- `csharpTestExplorer.refreshTests` — re-discover all tests
+- `csharpTestExplorer.runAll` — run every discovered test
+- `csharpTestExplorer.runTest` — run a specific tree node
+- `csharpTestExplorer.debugTest` — debug a specific tree node
+- `csharpTestExplorer.showOutput` — open the output channel
+
+## Keeping This Rule Up-to-Date
+
+After completing work on a GitHub issue, check whether the changes require updating this rule. Update it if any of the following occurred:
+
+- **New file or module added** — add it to the Architecture tree with a one-line description.
+- **File deleted or renamed** — update or remove the corresponding entry.
+- **New command registered** — add it to the Commands section.
+- **New key flow introduced or existing flow changed** — update the Key Flows section.
+- **Tech stack change** (new dependency, framework version bump, build tool change) — update Tech Stack.
+- **Architectural shift** (new top-level directory, module split/merge) — restructure the Architecture tree accordingly.
+
+Do NOT update this rule for:
+- Bug fixes that don't change the architecture.
+- Internal refactors within a single file (e.g., extracting a private method).
+- Test-only changes.
+
+When updating, keep descriptions to one line per file/entry. This rule should stay concise — it's a map, not documentation.

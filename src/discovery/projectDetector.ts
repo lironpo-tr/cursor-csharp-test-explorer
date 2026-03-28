@@ -28,7 +28,7 @@ export async function detectTestProjects(): Promise<TestProject[]> {
 
     const csprojFiles = await vscode.workspace.findFiles(
         '**/*.csproj',
-        '{**/node_modules/**,**/bin/**,**/obj/**}'
+        '{**/node_modules/**,**/bin/**,**/obj/**}',
     );
 
     const projects: TestProject[] = [];
@@ -57,12 +57,13 @@ export async function detectTestProjects(): Promise<TestProject[]> {
         }
     }
 
-    log(`Detected ${projects.length} test project(s): ${projects.map(p => p.projectName).join(', ')}`);
+    log(
+        `Detected ${projects.length} test project(s): ${projects.map((p) => p.projectName).join(', ')}`,
+    );
     return projects;
 }
 
 function detectFrameworks(csprojContent: string): string[] {
-    const lower = csprojContent.toLowerCase();
     const found: string[] = [];
 
     for (const pkg of TEST_FRAMEWORK_PACKAGES) {
@@ -80,9 +81,15 @@ function detectFrameworks(csprojContent: string): string[] {
 
 function classifyFramework(packageName: string): string | undefined {
     const lower = packageName.toLowerCase();
-    if (lower.startsWith('nunit')) { return 'NUnit'; }
-    if (lower.startsWith('xunit')) { return 'xUnit'; }
-    if (lower.startsWith('mstest')) { return 'MSTest'; }
+    if (lower.startsWith('nunit')) {
+        return 'NUnit';
+    }
+    if (lower.startsWith('xunit')) {
+        return 'xUnit';
+    }
+    if (lower.startsWith('mstest')) {
+        return 'MSTest';
+    }
     return undefined;
 }
 

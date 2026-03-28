@@ -39,9 +39,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
         vscode.commands.registerCommand('csharpTestExplorer.goToTest', (node: TestTreeNode) => {
             if (node?.sourceUri) {
-                const options: vscode.TextDocumentShowOptions = node.sourceLine !== undefined
-                    ? { selection: new vscode.Range(node.sourceLine, 0, node.sourceLine, 0) }
-                    : {};
+                const options: vscode.TextDocumentShowOptions =
+                    node.sourceLine !== undefined
+                        ? { selection: new vscode.Range(node.sourceLine, 0, node.sourceLine, 0) }
+                        : {};
                 vscode.window.showTextDocument(node.sourceUri, options);
             }
         }),
@@ -57,7 +58,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
     let debounceTimer: NodeJS.Timeout | undefined;
     const debouncedRediscover = () => {
-        if (debounceTimer) { clearTimeout(debounceTimer); }
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+        }
         debounceTimer = setTimeout(() => {
             log('File change detected, re-discovering tests...');
             controller?.discoverAllTests();

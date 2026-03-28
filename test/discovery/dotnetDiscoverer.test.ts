@@ -34,7 +34,7 @@ describe('extractParameterArgs', () => {
 
     it('should handle fully qualified MSTest attribute', () => {
         const result = extractParameterArgs(
-            '[Microsoft.VisualStudio.TestTools.UnitTesting.DataRow(1)]'
+            '[Microsoft.VisualStudio.TestTools.UnitTesting.DataRow(1)]',
         );
 
         expect(result).toBe('1');

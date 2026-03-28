@@ -28,16 +28,19 @@ export class TestTreeNode {
 }
 
 export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
-    private readonly _onDidChangeTreeData = new vscode.EventEmitter<TestTreeNode | undefined | void>();
+    private readonly _onDidChangeTreeData = new vscode.EventEmitter<
+        TestTreeNode | undefined | void
+    >();
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
     private roots: TestTreeNode[] = [];
     private allNodes = new Map<string, TestTreeNode>();
 
     getTreeItem(element: TestTreeNode): vscode.TreeItem {
-        const collapsible = element.children.length > 0
-            ? vscode.TreeItemCollapsibleState.Expanded
-            : vscode.TreeItemCollapsibleState.None;
+        const collapsible =
+            element.children.length > 0
+                ? vscode.TreeItemCollapsibleState.Expanded
+                : vscode.TreeItemCollapsibleState.None;
 
         const item = new vscode.TreeItem(element.label, collapsible);
         item.id = element.id;
@@ -53,13 +56,23 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
                 arguments: [
                     element.sourceUri,
                     element.sourceLine !== undefined
-                        ? { selection: new vscode.Range(element.sourceLine, 0, element.sourceLine, 0) }
+                        ? {
+                              selection: new vscode.Range(
+                                  element.sourceLine,
+                                  0,
+                                  element.sourceLine,
+                                  0,
+                              ),
+                          }
                         : undefined,
                 ],
             };
         }
 
-        if ((element.nodeType === 'method' || element.nodeType === 'parameterizedCase') && element.duration !== undefined) {
+        if (
+            (element.nodeType === 'method' || element.nodeType === 'parameterizedCase') &&
+            element.duration !== undefined
+        ) {
             item.description = `${element.duration}ms`;
         }
 
@@ -82,16 +95,15 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
         return undefined;
     }
 
-    buildTree(
-        projects: TestProject[],
-        testsByProject: Map<string, DiscoveredTest[]>,
-    ): void {
+    buildTree(projects: TestProject[], testsByProject: Map<string, DiscoveredTest[]>): void {
         this.roots = [];
         this.allNodes.clear();
 
         for (const project of projects) {
             const tests = testsByProject.get(project.csprojPath) ?? [];
-            if (tests.length === 0) { continue; }
+            if (tests.length === 0) {
+                continue;
+            }
 
             const pid = project.csprojPath;
             const projectNode = new TestTreeNode(
@@ -125,12 +137,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
             }
 
             for (const [ns, classMap] of nsMap) {
-                const nsNode = new TestTreeNode(
-                    `ns:${pid}:${ns}`,
-                    ns,
-                    'namespace',
-                    ns,
-                );
+                const nsNode = new TestTreeNode(`ns:${pid}:${ns}`, ns, 'namespace', ns);
                 nsNode.projectPath = project.csprojPath;
                 this.allNodes.set(nsNode.id, nsNode);
 
@@ -158,7 +165,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
                     this.allNodes.set(classNode.id, classNode);
 
                     for (const [methodName, cases] of methodMap) {
-                        const hasParameterizedCases = cases.some(c => c.parameters !== undefined);
+                        const hasParameterizedCases = cases.some((c) => c.parameters !== undefined);
 
                         if (hasParameterizedCases) {
                             const baseFqn = classFqn + '.' + methodName;
@@ -286,10 +293,14 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
         displayName: string,
     ): TestTreeNode | undefined {
         const parentNode = this.getNodeByFqn(parentFqn);
-        if (!parentNode) { return undefined; }
+        if (!parentNode) {
+            return undefined;
+        }
 
         const existingCase = this.getNodeByFqn(caseFqn);
-        if (existingCase) { return existingCase; }
+        if (existingCase) {
+            return existingCase;
+        }
 
         const pid = parentNode.projectPath ?? '';
         const caseNode = new TestTreeNode(
@@ -317,18 +328,23 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
 
     private propagateStateUp(node: TestTreeNode): void {
         const parent = this.getParent(node);
-        if (!parent) { return; }
+        if (!parent) {
+            return;
+        }
 
-        const childStates = parent.children.map(c => c.state);
-        if (childStates.some(s => s === 'failed')) {
+        const childStates = parent.children.map((c) => c.state);
+        if (childStates.some((s) => s === 'failed')) {
             parent.state = 'failed';
-        } else if (childStates.some(s => s === 'running')) {
+        } else if (childStates.some((s) => s === 'running')) {
             parent.state = 'running';
-        } else if (childStates.every(s => s === 'passed')) {
+        } else if (childStates.every((s) => s === 'passed')) {
             parent.state = 'passed';
-        } else if (childStates.every(s => s === 'skipped')) {
+        } else if (childStates.every((s) => s === 'skipped')) {
             parent.state = 'skipped';
-        } else if (childStates.some(s => s === 'passed') || childStates.some(s => s === 'skipped')) {
+        } else if (
+            childStates.some((s) => s === 'passed') ||
+            childStates.some((s) => s === 'skipped')
+        ) {
             parent.state = 'passed';
         } else {
             parent.state = 'none';
@@ -345,7 +361,10 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
             case 'failed':
                 return new vscode.ThemeIcon('error', new vscode.ThemeColor('testing.iconFailed'));
             case 'skipped':
-                return new vscode.ThemeIcon('debug-step-over', new vscode.ThemeColor('testing.iconSkipped'));
+                return new vscode.ThemeIcon(
+                    'debug-step-over',
+                    new vscode.ThemeColor('testing.iconSkipped'),
+                );
             case 'running':
                 return new vscode.ThemeIcon('loading~spin');
             case 'none':

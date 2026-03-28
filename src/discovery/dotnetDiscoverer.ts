@@ -16,25 +16,31 @@ export interface DiscoveredTest {
     parameters?: string;
 }
 
-const TEST_ATTR_REGEX = /\[\s*(?:NUnit\.Framework\.|Xunit\.|Microsoft\.VisualStudio\.TestTools\.UnitTesting\.)?(Test|TestCase|TestCaseSource|Fact|Theory|TestMethod|DataTestMethod)\b/;
-const PARAMETERIZED_ATTR_REGEX = /\[\s*(?:NUnit\.Framework\.|Xunit\.|Microsoft\.VisualStudio\.TestTools\.UnitTesting\.)?(TestCase|InlineData|DataRow)\s*\(/;
-const CLASS_REGEX = /(?:public|internal)\s+(?:sealed\s+|abstract\s+|static\s+|partial\s+)*class\s+(\w+)/;
-const METHOD_REGEX = /(?:public|internal|protected)\s+(?:static\s+|async\s+|virtual\s+|override\s+)*\S+\s+(\w+)\s*(?:<[^>]+>\s*)?\(/;
+const TEST_ATTR_REGEX =
+    /\[\s*(?:NUnit\.Framework\.|Xunit\.|Microsoft\.VisualStudio\.TestTools\.UnitTesting\.)?(Test|TestCase|TestCaseSource|Fact|Theory|TestMethod|DataTestMethod)\b/;
+const PARAMETERIZED_ATTR_REGEX =
+    /\[\s*(?:NUnit\.Framework\.|Xunit\.|Microsoft\.VisualStudio\.TestTools\.UnitTesting\.)?(TestCase|InlineData|DataRow)\s*\(/;
+const CLASS_REGEX =
+    /(?:public|internal)\s+(?:sealed\s+|abstract\s+|static\s+|partial\s+)*class\s+(\w+)/;
+const METHOD_REGEX =
+    /(?:public|internal|protected)\s+(?:static\s+|async\s+|virtual\s+|override\s+)*\S+\s+(\w+)\s*(?:<[^>]+>\s*)?\(/;
 const NAMESPACE_REGEX = /^\s*namespace\s+([\w.]+)/;
 
 export async function discoverTests(
     project: TestProject,
-    token?: vscode.CancellationToken
+    token?: vscode.CancellationToken,
 ): Promise<DiscoveredTest[]> {
     const tests: DiscoveredTest[] = [];
 
     const csFiles = await vscode.workspace.findFiles(
         new vscode.RelativePattern(project.projectDir, '**/*.cs'),
-        '{**/bin/**,**/obj/**}'
+        '{**/bin/**,**/obj/**}',
     );
 
     for (const fileUri of csFiles) {
-        if (token?.isCancellationRequested) { return []; }
+        if (token?.isCancellationRequested) {
+            return [];
+        }
 
         try {
             const content = await fs.readFile(fileUri.fsPath, 'utf-8');
@@ -56,7 +62,7 @@ export async function discoverTests(
 function parseTestMethods(
     content: string,
     fileUri: vscode.Uri,
-    project: TestProject
+    project: TestProject,
 ): DiscoveredTest[] {
     const results: DiscoveredTest[] = [];
     const lines = content.split(/\r?\n/);
@@ -140,14 +146,18 @@ function parseTestMethods(
         }
 
         for (const ch of trimmed) {
-            if (ch === '{') { braceDepth++; }
+            if (ch === '{') {
+                braceDepth++;
+            }
             if (ch === '}') {
                 braceDepth--;
-                if (classStack.length > 0 && braceDepth <= classStack[classStack.length - 1].depth) {
+                if (
+                    classStack.length > 0 &&
+                    braceDepth <= classStack[classStack.length - 1].depth
+                ) {
                     classStack.pop();
-                    currentClass = classStack.length > 0
-                        ? classStack[classStack.length - 1].name
-                        : '';
+                    currentClass =
+                        classStack.length > 0 ? classStack[classStack.length - 1].name : '';
                 }
             }
         }
@@ -163,13 +173,17 @@ export function extractParameterArgs(line: string): string | undefined {
     }
 
     const openParen = line.indexOf('(', line.search(PARAMETERIZED_ATTR_REGEX));
-    if (openParen === -1) { return undefined; }
+    if (openParen === -1) {
+        return undefined;
+    }
 
     let depth = 0;
-    let start = openParen + 1;
+    const start = openParen + 1;
     for (let i = openParen; i < line.length; i++) {
         const ch = line[i];
-        if (ch === '(') { depth++; }
+        if (ch === '(') {
+            depth++;
+        }
         if (ch === ')') {
             depth--;
             if (depth === 0) {

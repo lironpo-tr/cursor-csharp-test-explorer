@@ -9,23 +9,29 @@ export interface DotnetResult {
 }
 
 function getDotnetPath(): string {
-    return vscode.workspace.getConfiguration('csharpTestExplorer').get<string>('dotnetPath', 'dotnet');
+    return vscode.workspace
+        .getConfiguration('csharpTestExplorer')
+        .get<string>('dotnetPath', 'dotnet');
 }
 
 function getExtraArgs(): string[] {
-    const extra = vscode.workspace.getConfiguration('csharpTestExplorer').get<string>('testArguments', '');
+    const extra = vscode.workspace
+        .getConfiguration('csharpTestExplorer')
+        .get<string>('testArguments', '');
     return extra ? extra.split(/\s+/).filter(Boolean) : [];
 }
 
 export function shouldBuildBeforeTest(): boolean {
-    return vscode.workspace.getConfiguration('csharpTestExplorer').get<boolean>('buildBeforeTest', true);
+    return vscode.workspace
+        .getConfiguration('csharpTestExplorer')
+        .get<boolean>('buildBeforeTest', true);
 }
 
 export async function runDotnet(
     args: string[],
     cwd: string,
     token?: vscode.CancellationToken,
-    env?: Record<string, string>
+    env?: Record<string, string>,
 ): Promise<DotnetResult> {
     const dotnetPath = getDotnetPath();
     log(`> ${dotnetPath} ${args.join(' ')}  [cwd: ${cwd}]`);
@@ -69,7 +75,7 @@ export async function runDotnet(
 export function spawnDotnet(
     args: string[],
     cwd: string,
-    env?: Record<string, string>
+    env?: Record<string, string>,
 ): ChildProcess {
     const dotnetPath = getDotnetPath();
     log(`> ${dotnetPath} ${args.join(' ')}  [cwd: ${cwd}]`);

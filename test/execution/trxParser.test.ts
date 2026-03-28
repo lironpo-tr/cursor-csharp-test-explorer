@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseTrxXml, TrxSummary } from '../../src/execution/trxParser';
+import { parseTrxXml } from '../../src/execution/trxParser';
 
 function makeTrx({
     results = '',
@@ -196,11 +196,18 @@ describe('parseTrxXml', () => {
     });
 
     it('should map all known outcome values', () => {
-        const outcomes: string[] = ['Passed', 'Failed', 'NotExecuted', 'Inconclusive', 'Timeout', 'Error'];
+        const outcomes: string[] = [
+            'Passed',
+            'Failed',
+            'NotExecuted',
+            'Inconclusive',
+            'Timeout',
+            'Error',
+        ];
         const results = outcomes
             .map(
                 (o, i) =>
-                    `<UnitTestResult testId="id-${i}" testName="Test${i}" outcome="${o}" duration="00:00:00.0010000" />`
+                    `<UnitTestResult testId="id-${i}" testName="Test${i}" outcome="${o}" duration="00:00:00.0010000" />`,
             )
             .join('\n');
         const xml = makeTrx({

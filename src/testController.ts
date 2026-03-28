@@ -16,7 +16,9 @@ import { log, logError, showOutput } from './utils/outputChannel';
  */
 export function normalizeTestName(name: string): string {
     const parenIdx = name.indexOf('(');
-    if (parenIdx === -1) { return name; }
+    if (parenIdx === -1) {
+        return name;
+    }
     return name.substring(0, parenIdx) + name.substring(parenIdx).replace(/,\s+/g, ',');
 }
 
@@ -89,7 +91,9 @@ export class CSharpTestController implements vscode.Disposable {
             let totalTests = 0;
 
             for (const project of this.projects) {
-                if (token?.isCancellationRequested) { return; }
+                if (token?.isCancellationRequested) {
+                    return;
+                }
 
                 const tests = await discoverTests(project, token);
                 this.testsByProject.set(project.csprojPath, tests);
@@ -99,7 +103,9 @@ export class CSharpTestController implements vscode.Disposable {
             this.treeProvider.buildTree(this.projects, this.testsByProject);
 
             this.statusBar.text = `$(beaker) ${totalTests} C# test(s)`;
-            log(`Discovery complete: ${totalTests} test(s) across ${this.projects.length} project(s).`);
+            log(
+                `Discovery complete: ${totalTests} test(s) across ${this.projects.length} project(s).`,
+            );
         } catch (err) {
             logError('Discovery failed', err);
             this.statusBar.text = '$(error) Discovery failed';
@@ -144,12 +150,16 @@ export class CSharpTestController implements vscode.Disposable {
         const token = this.activeCts!.token;
         try {
             for (const root of this.treeProvider.getRoots()) {
-                if (token.isCancellationRequested) { break; }
+                if (token.isCancellationRequested) {
+                    break;
+                }
 
                 try {
                     await this.executeTests(root, token);
                 } catch (err) {
-                    if (this.isCancelError(err)) { break; }
+                    if (this.isCancelError(err)) {
+                        break;
+                    }
 
                     logError(`Run failed for project: ${root.label}`, err);
                     this.markRunningNodesAsFailed(root, err);
@@ -273,7 +283,9 @@ export class CSharpTestController implements vscode.Disposable {
     }
 
     private async executeTests(node: TestTreeNode, token: vscode.CancellationToken): Promise<void> {
-        if (!node.projectPath || token.isCancellationRequested) { return; }
+        if (!node.projectPath || token.isCancellationRequested) {
+            return;
+        }
 
         const projectDir = path.dirname(node.projectPath);
         const trxDir = path.join(os.tmpdir(), '.cursor-test-results', Date.now().toString());
@@ -298,7 +310,9 @@ export class CSharpTestController implements vscode.Disposable {
         try {
             result = await runDotnet(args, projectDir, token);
         } catch (err) {
-            if (this.isCancelError(err)) { throw err; }
+            if (this.isCancelError(err)) {
+                throw err;
+            }
 
             logError(`dotnet test failed to execute for ${node.label}`, err);
             this.markRunningNodesAsFailed(node, err);
@@ -306,7 +320,9 @@ export class CSharpTestController implements vscode.Disposable {
             return;
         }
 
-        if (token.isCancellationRequested) { return; }
+        if (token.isCancellationRequested) {
+            return;
+        }
 
         const trxPath = path.join(trxDir, trxFileName);
         const methodNodes = this.collectMethodNodes(node);
@@ -317,16 +333,25 @@ export class CSharpTestController implements vscode.Disposable {
             // Build lookup maps for flexible matching (strip params so parameterized cases group by base method name)
             const methodsByName = new Map<string, TestTreeNode[]>();
             for (const m of methodNodes) {
-                const shortName = m.fqn.replace(/\(.*\)$/, '').split('.').pop() ?? m.fqn;
+                const shortName =
+                    m.fqn
+                        .replace(/\(.*\)$/, '')
+                        .split('.')
+                        .pop() ?? m.fqn;
                 const list = methodsByName.get(shortName) ?? [];
                 list.push(m);
                 methodsByName.set(shortName, list);
             }
 
             for (const tr of summary.results) {
-                const state: TestState = tr.outcome === 'Passed' ? 'passed'
-                    : tr.outcome === 'Failed' || tr.outcome === 'Error' || tr.outcome === 'Timeout' ? 'failed'
-                    : 'skipped';
+                const state: TestState =
+                    tr.outcome === 'Passed'
+                        ? 'passed'
+                        : tr.outcome === 'Failed' ||
+                            tr.outcome === 'Error' ||
+                            tr.outcome === 'Timeout'
+                          ? 'failed'
+                          : 'skipped';
 
                 const details = {
                     errorMessage: tr.errorMessage,
@@ -346,7 +371,9 @@ export class CSharpTestController implements vscode.Disposable {
                         const parentBaseFqn = baseName;
                         const displayName = tr.testName.split('.').pop() ?? tr.testName;
                         const dynamicNode = this.treeProvider.addDynamicCaseNode(
-                            parentBaseFqn, tr.testName, displayName,
+                            parentBaseFqn,
+                            tr.testName,
+                            displayName,
                         );
                         if (dynamicNode) {
                             this.applyState(dynamicNode, state, details);
@@ -360,7 +387,11 @@ export class CSharpTestController implements vscode.Disposable {
                 }
 
                 if (!matched) {
-                    const shortName = tr.testName.replace(/\(.*\)$/, '').split('.').pop() ?? tr.testName;
+                    const shortName =
+                        tr.testName
+                            .replace(/\(.*\)$/, '')
+                            .split('.')
+                            .pop() ?? tr.testName;
                     const candidates = methodsByName.get(shortName);
                     if (candidates && candidates.length > 0) {
                         for (const c of candidates) {
@@ -375,11 +406,17 @@ export class CSharpTestController implements vscode.Disposable {
                 }
             }
 
-            log(`Results: ${summary.passed} passed, ${summary.failed} failed, ${summary.skipped} skipped`);
+            log(
+                `Results: ${summary.passed} passed, ${summary.failed} failed, ${summary.skipped} skipped`,
+            );
         } catch {
             logError('Could not read TRX results, check output for raw dotnet test output');
-            if (result.stdout) { log(result.stdout); }
-            if (result.stderr) { log(result.stderr); }
+            if (result.stdout) {
+                log(result.stdout);
+            }
+            if (result.stderr) {
+                log(result.stderr);
+            }
 
             if (result.exitCode !== 0) {
                 for (const m of methodNodes) {
@@ -399,7 +436,7 @@ export class CSharpTestController implements vscode.Disposable {
         name: string,
         state: TestState,
         details: { errorMessage?: string; stackTrace?: string; duration?: number },
-        candidates: TestTreeNode[]
+        candidates: TestTreeNode[],
     ): boolean {
         const normalized = normalizeTestName(name);
         for (const node of candidates) {
@@ -415,7 +452,7 @@ export class CSharpTestController implements vscode.Disposable {
     private applyState(
         node: TestTreeNode,
         state: TestState,
-        details?: { errorMessage?: string; stackTrace?: string; duration?: number }
+        details?: { errorMessage?: string; stackTrace?: string; duration?: number },
     ): void {
         node.state = state;
         if (details) {
@@ -472,8 +509,8 @@ export class CSharpTestController implements vscode.Disposable {
 
     private updateStatusBar(): void {
         const methods = this.treeProvider.getAllMethodNodes();
-        const passed = methods.filter(m => m.state === 'passed').length;
-        const failed = methods.filter(m => m.state === 'failed').length;
+        const passed = methods.filter((m) => m.state === 'passed').length;
+        const failed = methods.filter((m) => m.state === 'failed').length;
         const total = methods.length;
 
         if (failed > 0) {

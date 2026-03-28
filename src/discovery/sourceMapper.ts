@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
-import { log, logError } from '../utils/outputChannel';
+import { logError } from '../utils/outputChannel';
 
 export interface SourceLocation {
     uri: vscode.Uri;
@@ -12,21 +12,16 @@ const TEST_ATTRIBUTE_PATTERN =
     /\[\s*(?:NUnit\.Framework\.|Xunit\.|Microsoft\.VisualStudio\.TestTools\.UnitTesting\.)?(Test|TestCase|TestCaseSource|Fact|Theory|TestMethod|DataTestMethod)\b/;
 
 const CLASS_PATTERN = /(?:public|internal)\s+(?:sealed\s+|abstract\s+|static\s+)*class\s+(\w+)/;
-const METHOD_PATTERN = /(?:public|internal|protected)\s+(?:static\s+|async\s+|virtual\s+|override\s+)*\S+\s+(\w+)\s*(?:<[^>]+>\s*)?\(/;
+const METHOD_PATTERN =
+    /(?:public|internal|protected)\s+(?:static\s+|async\s+|virtual\s+|override\s+)*\S+\s+(\w+)\s*(?:<[^>]+>\s*)?\(/;
 const NAMESPACE_PATTERN = /namespace\s+([\w.]+)/;
-
-interface FileTestMap {
-    [className: string]: {
-        [methodName: string]: SourceLocation;
-    };
-}
 
 export async function buildSourceMap(projectDir: string): Promise<Map<string, SourceLocation>> {
     const testMap = new Map<string, SourceLocation>();
 
     const csFiles = await vscode.workspace.findFiles(
         new vscode.RelativePattern(projectDir, '**/*.cs'),
-        '{**/bin/**,**/obj/**}'
+        '{**/bin/**,**/obj/**}',
     );
 
     for (const fileUri of csFiles) {
@@ -96,14 +91,18 @@ function parseTestLocations(content: string, fileUri: vscode.Uri): Map<string, S
         }
 
         for (const ch of trimmed) {
-            if (ch === '{') { braceDepth++; }
+            if (ch === '{') {
+                braceDepth++;
+            }
             if (ch === '}') {
                 braceDepth--;
-                if (classStack.length > 0 && braceDepth <= classStack[classStack.length - 1].depth) {
+                if (
+                    classStack.length > 0 &&
+                    braceDepth <= classStack[classStack.length - 1].depth
+                ) {
                     classStack.pop();
-                    currentClass = classStack.length > 0
-                        ? classStack[classStack.length - 1].name
-                        : '';
+                    currentClass =
+                        classStack.length > 0 ? classStack[classStack.length - 1].name : '';
                 }
             }
         }

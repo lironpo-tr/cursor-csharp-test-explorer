@@ -3,6 +3,7 @@
     "displayName": "C# Test Explorer",
     "description": "Discover, run, and debug C# tests (NUnit, xUnit, MSTest) with a sidebar tree view",
     "version": "0.7.0",
+    "license": "MIT",
     "publisher": "lironpo",
     "engines": {
         "vscode": "^1.85.0"

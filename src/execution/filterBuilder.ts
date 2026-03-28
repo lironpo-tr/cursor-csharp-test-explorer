@@ -1,4 +1,12 @@
 import * as vscode from 'vscode';
+import {
+    setTestItemData,
+    getTagValue,
+    getProjectPath,
+    getNodeType,
+    getFqn,
+    findProjectPath,
+} from '../utils/testItemUtils';
 
 /**
  * Builds a `dotnet test --filter` expression from a set of TestItems.
@@ -12,55 +20,11 @@ import * as vscode from 'vscode';
  * Filter syntax: https://learn.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests
  */
 
+export { setTestItemData, getTagValue, getProjectPath, getNodeType, getFqn };
+
 export interface FilterResult {
     filter: string | undefined;
     projectPath: string | undefined;
-}
-
-const TAG_PROJECT_PATH = 'projectPath';
-const TAG_NODE_TYPE = 'nodeType';
-const TAG_FQN = 'fqn';
-
-export function setTestItemData(
-    item: vscode.TestItem,
-    data: { projectPath?: string; nodeType?: string; fqn?: string },
-): void {
-    if (!item.tags) {
-        item.tags = [];
-    }
-    // We store metadata as prefixed tags since TestItem doesn't have a generic data slot
-    const tags: vscode.TestTag[] = [...item.tags];
-    if (data.projectPath) {
-        tags.push(new vscode.TestTag(`${TAG_PROJECT_PATH}:${data.projectPath}`));
-    }
-    if (data.nodeType) {
-        tags.push(new vscode.TestTag(`${TAG_NODE_TYPE}:${data.nodeType}`));
-    }
-    if (data.fqn) {
-        tags.push(new vscode.TestTag(`${TAG_FQN}:${data.fqn}`));
-    }
-    item.tags = tags;
-}
-
-export function getTagValue(item: vscode.TestItem, prefix: string): string | undefined {
-    for (const tag of item.tags) {
-        if (tag.id.startsWith(`${prefix}:`)) {
-            return tag.id.substring(prefix.length + 1);
-        }
-    }
-    return undefined;
-}
-
-export function getProjectPath(item: vscode.TestItem): string | undefined {
-    return getTagValue(item, TAG_PROJECT_PATH);
-}
-
-export function getNodeType(item: vscode.TestItem): string | undefined {
-    return getTagValue(item, TAG_NODE_TYPE);
-}
-
-export function getFqn(item: vscode.TestItem): string | undefined {
-    return getTagValue(item, TAG_FQN);
 }
 
 export function buildFilter(items: readonly vscode.TestItem[]): FilterResult {
@@ -107,18 +71,6 @@ export function buildFilter(items: readonly vscode.TestItem[]): FilterResult {
         expressions.length === 1 ? expressions[0] : expressions.map((e) => `(${e})`).join(' | ');
 
     return { filter, projectPath };
-}
-
-function findProjectPath(item: vscode.TestItem): string | undefined {
-    let current: vscode.TestItem | undefined = item;
-    while (current) {
-        const pp = getProjectPath(current);
-        if (pp) {
-            return pp;
-        }
-        current = current.parent;
-    }
-    return undefined;
 }
 
 function escapeFilter(value: string): string {

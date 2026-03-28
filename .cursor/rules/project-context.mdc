@@ -23,7 +23,8 @@ src/
 ├── discovery/
 │   ├── projectDetector.ts    # Finds .csproj files in the workspace
 │   ├── dotnetDiscoverer.ts   # Runs `dotnet test --list-tests` to discover tests
-│   └── sourceMapper.ts       # Maps discovered tests back to source file locations
+│   ├── sourceMapper.ts       # Maps discovered tests back to source file locations
+│   └── patterns.ts           # Shared regex patterns for C# test attribute/class/method detection
 ├── execution/
 │   ├── testRunner.ts         # Executes `dotnet test` with filters
 │   ├── filterBuilder.ts      # Builds --filter expressions for dotnet test
@@ -35,7 +36,8 @@ src/
 │   └── statusBarManager.ts   # Status bar indicator for test runs
 └── utils/
     ├── outputChannel.ts      # Logging via VS Code OutputChannel
-    └── dotnetCli.ts          # Wrapper for spawning dotnet CLI processes
+    ├── dotnetCli.ts          # Wrapper for spawning dotnet CLI processes
+    └── testItemUtils.ts      # Shared helpers for TestItem tag storage and parent-chain lookups
 ```
 
 ## Key Flows

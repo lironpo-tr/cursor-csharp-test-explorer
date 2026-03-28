@@ -9,6 +9,8 @@ import { Logger } from '../utils/logger';
 import { matchAndApplyResults, applyResultState } from './resultMatcher';
 
 const RESULTS_DIR_NAME = '.cursor-test-results';
+const TRX_MAX_RETRIES = 3;
+const TRX_RETRY_DELAY_MS = 500;
 
 export function buildFilterForNode(node: TestTreeNode): string | undefined {
     switch (node.nodeType) {
@@ -128,20 +130,23 @@ export async function executeTests(
         return;
     }
 
-    const trxPath = path.join(trxDir, trxFileName);
     const methodNodes = collectMethodNodes(node);
+    const trxPath = await findTrxFile(trxDir);
+
+    if (!trxPath) {
+        handleMissingTrxFile(result, methodNodes, treeProvider, logger);
+        fs.rm(trxDir, { recursive: true }).catch((cleanupErr) => {
+            logger.logTrace(`Failed to clean up TRX directory ${trxDir}: ${cleanupErr}`);
+        });
+        return;
+    }
 
     try {
         const summary = await parseTrxFile(trxPath);
         matchAndApplyResults(summary, methodNodes, treeProvider, logger);
     } catch (err) {
-        logger.logError('Could not read TRX results, check output for raw dotnet test output', err);
-        if (result.stdout) {
-            logger.log(result.stdout);
-        }
-        if (result.stderr) {
-            logger.log(result.stderr);
-        }
+        logger.logError('Could not parse TRX results, check output for raw dotnet test output', err);
+        dumpDotnetOutput(result, logger);
 
         if (result.exitCode !== 0) {
             for (const m of methodNodes) {
@@ -160,6 +165,103 @@ export async function executeTests(
     fs.rm(trxDir, { recursive: true }).catch((cleanupErr) => {
         logger.logTrace(`Failed to clean up TRX directory ${trxDir}: ${cleanupErr}`);
     });
+}
+
+function handleMissingTrxFile(
+    result: { exitCode: number; stdout: string; stderr: string },
+    methodNodes: TestTreeNode[],
+    treeProvider: TestTreeProvider,
+    logger: Logger,
+): void {
+    if (result.exitCode === 0) {
+        logger.log(
+            'No TRX results file generated. Tests may have been filtered out or skipped.',
+        );
+        for (const m of methodNodes) {
+            if (m.state === 'running') {
+                applyResultState(m, 'skipped', undefined, treeProvider);
+            }
+        }
+    } else {
+        logger.logError(
+            'No TRX results file generated and dotnet test exited with a non-zero code. ' +
+                'Check output for details.',
+        );
+        dumpDotnetOutput(result, logger);
+        for (const m of methodNodes) {
+            if (m.state === 'running') {
+                applyResultState(
+                    m,
+                    'failed',
+                    { errorMessage: 'Test run failed — no TRX results produced. Check C# Test Explorer output.' },
+                    treeProvider,
+                );
+            }
+        }
+    }
+}
+
+function dumpDotnetOutput(
+    result: { stdout: string; stderr: string },
+    logger: Logger,
+): void {
+    if (result.stdout) {
+        logger.log(result.stdout);
+    }
+    if (result.stderr) {
+        logger.log(result.stderr);
+    }
+}
+
+/**
+ * Scans a directory for `.trx` files, retrying with a short delay to handle
+ * the race condition where dotnet test has exited but the TRX file hasn't
+ * been flushed to disk yet.
+ *
+ * Returns the path to the first `.trx` file found, or `undefined` if none
+ * exists after all retries.
+ */
+export async function findTrxFile(
+    trxDir: string,
+    maxRetries: number = TRX_MAX_RETRIES,
+    retryDelayMs: number = TRX_RETRY_DELAY_MS,
+): Promise<string | undefined> {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        if (attempt > 0) {
+            await delay(retryDelayMs);
+        }
+
+        const trxFiles = await findTrxFilesInDir(trxDir);
+        if (trxFiles.length > 0) {
+            return trxFiles[0];
+        }
+    }
+    return undefined;
+}
+
+async function findTrxFilesInDir(dir: string): Promise<string[]> {
+    try {
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+        const results: string[] = [];
+
+        for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isFile() && entry.name.endsWith('.trx')) {
+                results.push(fullPath);
+            } else if (entry.isDirectory()) {
+                const nested = await findTrxFilesInDir(fullPath);
+                results.push(...nested);
+            }
+        }
+
+        return results;
+    } catch {
+        return [];
+    }
+}
+
+function delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function isCancelError(err: unknown): boolean {

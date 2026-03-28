@@ -67,7 +67,34 @@ Follow the [Conventional Commits](https://www.conventionalcommits.org/) spec:
 
 Before creating the PR, review whether `.cursor/rules/project-context.mdc` needs updating per its maintenance rules (new files, renamed modules, new commands, changed flows).
 
-## 4. Pull Request
+## 4. Self Code Review
+
+Before pushing and creating the PR, perform a self code review on **all files changed in this branch**. Use `git diff main...HEAD` to identify the changed files, then review each one.
+
+### What to check
+
+| Category | Look for |
+|---|---|
+| **Bugs & logic errors** | Off-by-one errors, wrong conditions, missing edge cases, incorrect return values |
+| **Error handling** | Swallowed errors, overly broad catches, missing error handling on async calls |
+| **Resource management** | Disposables not cleaned up, event listeners not unsubscribed, missing `finally` blocks |
+| **Race conditions** | Unguarded shared state, missing cancellation checks, async operations that can interleave |
+| **Naming & readability** | Unclear names, misleading names, inconsistent conventions |
+| **Dead code** | Unused imports, unreachable branches, leftover debugging code |
+| **Security** | Hardcoded secrets, unsanitized input passed to shells or file paths |
+| **Performance** | Unnecessary allocations in hot paths, redundant iterations, missing early returns |
+| **API misuse** | Incorrect use of VS Code API, Node.js API, or third-party library APIs |
+| **Duplication** | Copy-pasted logic that should be extracted into a shared helper |
+
+### Procedure
+
+1. Read every changed file.
+2. For each issue found, fix it immediately.
+3. After fixing, re-run linting (`ReadLints`) on the affected files.
+4. If fixes were needed, create a new commit: `chore: self-review fixes`.
+5. If no issues are found, proceed — do not mention the review to the user unless problems were found and fixed.
+
+## 5. Pull Request
 
 When done working on an issue, **automatically create a pull request** — do not wait for the user to ask.
 

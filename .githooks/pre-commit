@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Fail if README.md is out of sync with package.json.
+# Run `npm run readme:update` to fix.
+
+node scripts/update-readme.mjs --check

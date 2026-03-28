@@ -45,42 +45,49 @@
             {
                 "command": "csharpTestExplorer.refreshTests",
                 "title": "Refresh Tests",
+                "description": "Re-scan projects and re-discover all tests",
                 "category": "C# Test Explorer",
                 "icon": "$(refresh)"
             },
             {
                 "command": "csharpTestExplorer.runAll",
                 "title": "Run All Tests",
+                "description": "Run every discovered test",
                 "category": "C# Test Explorer",
                 "icon": "$(run-all)"
             },
             {
                 "command": "csharpTestExplorer.runTest",
                 "title": "Run Test",
+                "description": "Run the selected test, class, namespace, or project",
                 "category": "C# Test Explorer",
                 "icon": "$(play)"
             },
             {
                 "command": "csharpTestExplorer.debugTest",
                 "title": "Debug Test",
+                "description": "Debug the selected test node with coreclr attach",
                 "category": "C# Test Explorer",
                 "icon": "$(debug-alt)"
             },
             {
                 "command": "csharpTestExplorer.showOutput",
                 "title": "Show Output",
+                "description": "Open the C# Test Explorer output channel",
                 "category": "C# Test Explorer",
                 "icon": "$(output)"
             },
             {
                 "command": "csharpTestExplorer.goToTest",
                 "title": "Go to Test Source",
+                "description": "Open the source file at the test method's line",
                 "category": "C# Test Explorer",
                 "icon": "$(go-to-file)"
             },
             {
                 "command": "csharpTestExplorer.stopRun",
                 "title": "Stop Test Run",
+                "description": "Cancel the currently running test execution",
                 "category": "C# Test Explorer",
                 "icon": "$(debug-stop)"
             }
@@ -171,6 +178,7 @@
         }
     },
     "scripts": {
+        "prepare": "git config core.hooksPath .githooks",
         "vscode:prepublish": "npm run compile",
         "package": "node -e \"require('fs').mkdirSync('releases',{recursive:true})\" && vsce package --out releases",
         "compile": "tsc -p ./",
@@ -179,6 +187,8 @@
         "lint:fix": "eslint src test --fix",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"*.{json,mjs,ts}\"",
         "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"*.{json,mjs,ts}\"",
+        "readme:update": "node scripts/update-readme.mjs",
+        "readme:check": "node scripts/update-readme.mjs --check",
         "test": "vitest run",
         "test:watch": "vitest"
     },

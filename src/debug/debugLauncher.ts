@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs/promises';
 import { ChildProcess } from 'child_process';
 import { TestTreeNode } from '../ui/testTreeProvider';
 import { getExtraArgs } from '../utils/dotnetCli';
@@ -14,7 +15,22 @@ export async function launchDebugSession(
     logger: Logger,
 ): Promise<void> {
     if (!node.projectPath) {
-        logger.logError('No project path for node');
+        logger.logError(`No project path for "${node.label}". Try re-discovering tests.`);
+        return;
+    }
+
+    let projectExists = false;
+    try {
+        await fs.access(node.projectPath);
+        projectExists = true;
+    } catch {
+        // file does not exist or is inaccessible
+    }
+
+    if (!projectExists) {
+        logger.logError(
+            `Project file not found: ${node.projectPath}. Re-discover tests to refresh the project list.`,
+        );
         return;
     }
 

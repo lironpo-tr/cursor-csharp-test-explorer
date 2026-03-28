@@ -291,6 +291,62 @@ describe('collectAllMethodNodes', () => {
     });
 });
 
+describe('multi-select pipeline', () => {
+    it('should build filter and collect method nodes for cross-class multi-select', () => {
+        const projectPath = '/path/to/project.csproj';
+        const nodeA = makeNode('method', 'NS.ClassA.Test1', projectPath);
+        const nodeB = makeNode('method', 'NS.ClassB.Test2', projectPath);
+        const nodeC = makeNode('method', 'NS.ClassC.Test3', projectPath);
+        const selected = [nodeA, nodeB, nodeC];
+
+        const filter = buildFilterForNodes(selected);
+        const methodNodes = collectAllMethodNodes(selected);
+        const grouped = groupNodesByProject(selected);
+
+        expect(filter).toBe(
+            '(FullyQualifiedName~NS.ClassA.Test1) | (FullyQualifiedName~NS.ClassB.Test2) | (FullyQualifiedName~NS.ClassC.Test3)',
+        );
+        expect(methodNodes).toHaveLength(3);
+        expect(grouped.size).toBe(1);
+        expect(grouped.get(projectPath)).toHaveLength(3);
+    });
+
+    it('should build filter and group nodes for cross-project multi-select', () => {
+        const projA = '/path/to/projectA.csproj';
+        const projB = '/path/to/projectB.csproj';
+        const node1 = makeNode('method', 'NS.A.Test1', projA);
+        const node2 = makeNode('method', 'NS.B.Test2', projB);
+        const node3 = makeNode('method', 'NS.A.Test3', projA);
+
+        const grouped = groupNodesByProject([node1, node2, node3]);
+        const groupA = grouped.get(projA)!;
+        const groupB = grouped.get(projB)!;
+
+        expect(grouped.size).toBe(2);
+        expect(buildFilterForNodes(groupA)).toBe(
+            '(FullyQualifiedName~NS.A.Test1) | (FullyQualifiedName~NS.A.Test3)',
+        );
+        expect(buildFilterForNodes(groupB)).toBe('FullyQualifiedName~NS.B.Test2');
+        expect(collectAllMethodNodes(groupA)).toHaveLength(2);
+        expect(collectAllMethodNodes(groupB)).toHaveLength(1);
+    });
+
+    it('should handle mix of method and parameterizedCase nodes in multi-select', () => {
+        const projectPath = '/path/to/project.csproj';
+        const method = makeNode('method', 'NS.A.Test1', projectPath);
+        const case1 = makeNode('parameterizedCase', 'NS.B.Add(1,2)', projectPath);
+        const case2 = makeNode('parameterizedCase', 'NS.B.Add(3,4)', projectPath);
+
+        const filter = buildFilterForNodes([method, case1, case2]);
+        const methodNodes = collectAllMethodNodes([method, case1, case2]);
+
+        expect(filter).toBe(
+            '(FullyQualifiedName~NS.A.Test1) | (FullyQualifiedName=NS.B.Add(1,2)) | (FullyQualifiedName=NS.B.Add(3,4))',
+        );
+        expect(methodNodes).toHaveLength(3);
+    });
+});
+
 describe('groupNodesByProject', () => {
     it('should group nodes by project path', () => {
         const node1 = makeNode('method', 'NS.A.Test1', '/path/to/projectA.csproj');

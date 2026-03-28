@@ -2,6 +2,13 @@ import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
 import { log, logError } from '../utils/outputChannel';
 import { TestProject } from './projectDetector';
+import {
+    TEST_ATTRIBUTE_REGEX,
+    PARAMETERIZED_ATTRIBUTE_REGEX,
+    CLASS_REGEX,
+    METHOD_REGEX,
+    NAMESPACE_REGEX,
+} from './patterns';
 
 export interface DiscoveredTest {
     fullyQualifiedName: string;
@@ -15,16 +22,6 @@ export interface DiscoveredTest {
     sourceLine: number;
     parameters?: string;
 }
-
-const TEST_ATTR_REGEX =
-    /\[\s*(?:NUnit\.Framework\.|Xunit\.|Microsoft\.VisualStudio\.TestTools\.UnitTesting\.)?(Test|TestCase|TestCaseSource|Fact|Theory|TestMethod|DataTestMethod)\b/;
-const PARAMETERIZED_ATTR_REGEX =
-    /\[\s*(?:NUnit\.Framework\.|Xunit\.|Microsoft\.VisualStudio\.TestTools\.UnitTesting\.)?(TestCase|InlineData|DataRow)\s*\(/;
-const CLASS_REGEX =
-    /(?:public|internal)\s+(?:sealed\s+|abstract\s+|static\s+|partial\s+)*class\s+(\w+)/;
-const METHOD_REGEX =
-    /(?:public|internal|protected)\s+(?:static\s+|async\s+|virtual\s+|override\s+)*\S+\s+(\w+)\s*(?:<[^>]+>\s*)?\(/;
-const NAMESPACE_REGEX = /^\s*namespace\s+([\w.]+)/;
 
 export async function discoverTests(
     project: TestProject,
@@ -44,7 +41,7 @@ export async function discoverTests(
 
         try {
             const content = await fs.readFile(fileUri.fsPath, 'utf-8');
-            if (!TEST_ATTR_REGEX.test(content)) {
+            if (!TEST_ATTRIBUTE_REGEX.test(content)) {
                 continue;
             }
 
@@ -96,7 +93,7 @@ function parseTestMethods(
             classStack.push({ name: currentClass, depth: braceDepth });
         }
 
-        if (TEST_ATTR_REGEX.test(trimmed)) {
+        if (TEST_ATTRIBUTE_REGEX.test(trimmed)) {
             nextMethodIsTest = true;
         }
 
@@ -168,11 +165,11 @@ function parseTestMethods(
 
 /** Extracts the argument string from a parameterized test attribute, or undefined if not a match. */
 export function extractParameterArgs(line: string): string | undefined {
-    if (!PARAMETERIZED_ATTR_REGEX.test(line)) {
+    if (!PARAMETERIZED_ATTRIBUTE_REGEX.test(line)) {
         return undefined;
     }
 
-    const openParen = line.indexOf('(', line.search(PARAMETERIZED_ATTR_REGEX));
+    const openParen = line.indexOf('(', line.search(PARAMETERIZED_ATTRIBUTE_REGEX));
     if (openParen === -1) {
         return undefined;
     }

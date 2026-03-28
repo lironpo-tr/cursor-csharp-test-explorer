@@ -84,13 +84,29 @@ export function matchAndApplyResults(
             const hasParams = baseName !== tr.testName;
 
             if (hasParams) {
-                const parentBaseFqn = baseName;
-                const displayName = tr.testName.split('.').pop() ?? tr.testName;
-                const dynamicNode = treeProvider.addDynamicCaseNode(
-                    parentBaseFqn,
+                const paramPart = tr.testName.substring(baseName.length);
+                const shortMethod = baseName.split('.').pop() ?? baseName;
+                const displayName = shortMethod + paramPart;
+
+                let dynamicNode = treeProvider.addDynamicCaseNode(
+                    baseName,
                     tr.testName,
                     displayName,
                 );
+
+                if (!dynamicNode) {
+                    const parent = findParentBySuffix(baseName, methodNodes);
+                    if (parent) {
+                        const parentBase = parent.fqn.replace(/\(.*\)$/, '');
+                        const fullCaseFqn = parentBase + paramPart;
+                        dynamicNode = treeProvider.addDynamicCaseNode(
+                            parentBase,
+                            fullCaseFqn,
+                            displayName,
+                        );
+                    }
+                }
+
                 if (dynamicNode) {
                     applyResultState(dynamicNode, state, details, treeProvider);
                     matched = true;
@@ -125,6 +141,25 @@ export function matchAndApplyResults(
     logger.log(
         `Results: ${summary.passed} passed, ${summary.failed} failed, ${summary.skipped} skipped`,
     );
+}
+
+/**
+ * Finds a parent method node whose base FQN (params stripped) matches the given
+ * base name exactly or by suffix. Handles the case where TRX results use short
+ * names (e.g., "MethodName") while tree nodes store full FQNs
+ * (e.g., "Namespace.Class.MethodName").
+ */
+function findParentBySuffix(
+    baseName: string,
+    candidates: TestTreeNode[],
+): TestTreeNode | undefined {
+    for (const node of candidates) {
+        const nodeBase = node.fqn.replace(/\(.*\)$/, '');
+        if (nodeBase === baseName || nodeBase.endsWith(`.${baseName}`)) {
+            return node;
+        }
+    }
+    return undefined;
 }
 
 function tryMatchResult(

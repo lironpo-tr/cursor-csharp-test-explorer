@@ -10,4 +10,7 @@ export const CLASS_REGEX =
 export const METHOD_REGEX =
     /(?:public|internal|protected)\s+(?:static\s+|async\s+|virtual\s+|override\s+)*\S+\s+(\w+)\s*(?:<[^>]+>\s*)?\(/;
 
+export const DYNAMIC_SOURCE_ATTRIBUTE_REGEX =
+    /\[\s*(?:NUnit\.Framework\.)?TestCaseSource\b/;
+
 export const NAMESPACE_REGEX = /^\s*namespace\s+([\w.]+)/;

@@ -5,6 +5,7 @@ import { TestProject } from './projectDetector';
 import {
     TEST_ATTRIBUTE_REGEX,
     PARAMETERIZED_ATTRIBUTE_REGEX,
+    DYNAMIC_SOURCE_ATTRIBUTE_REGEX,
     CLASS_REGEX,
     METHOD_REGEX,
     NAMESPACE_REGEX,
@@ -21,6 +22,7 @@ export interface DiscoveredTest {
     sourceUri: vscode.Uri;
     sourceLine: number;
     parameters?: string;
+    hasDynamicSource?: boolean;
 }
 
 export async function discoverTests(
@@ -68,6 +70,7 @@ function parseTestMethods(
     let currentNamespace = '';
     let currentClass = '';
     let nextMethodIsTest = false;
+    let nextMethodIsDynamicSource = false;
     const pendingParams: string[] = [];
     let braceDepth = 0;
     const classStack: { name: string; depth: number }[] = [];
@@ -96,6 +99,10 @@ function parseTestMethods(
 
         if (TEST_ATTRIBUTE_REGEX.test(trimmed)) {
             nextMethodIsTest = true;
+        }
+
+        if (DYNAMIC_SOURCE_ATTRIBUTE_REGEX.test(trimmed)) {
+            nextMethodIsDynamicSource = true;
         }
 
         const paramArgs = extractParameterArgs(trimmed);
@@ -135,10 +142,12 @@ function parseTestMethods(
                         ...shared,
                         fullyQualifiedName: baseFqn,
                         displayName: methodName,
+                        hasDynamicSource: nextMethodIsDynamicSource || undefined,
                     });
                 }
 
                 nextMethodIsTest = false;
+                nextMethodIsDynamicSource = false;
                 pendingParams.length = 0;
             }
         }

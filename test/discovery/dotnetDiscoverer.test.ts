@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { extractParameterArgs } from '../../src/discovery/dotnetDiscoverer';
+import { DYNAMIC_SOURCE_ATTRIBUTE_REGEX } from '../../src/discovery/patterns';
 
 describe('extractParameterArgs', () => {
     it('should extract args from NUnit [TestCase(...)]', () => {
@@ -116,5 +117,41 @@ describe('extractParameterArgs', () => {
         const result = extractParameterArgs('');
 
         expect(result).toBeUndefined();
+    });
+});
+
+describe('DYNAMIC_SOURCE_ATTRIBUTE_REGEX', () => {
+    it('should match [TestCaseSource(...)]', () => {
+        expect(DYNAMIC_SOURCE_ATTRIBUTE_REGEX.test('[TestCaseSource(nameof(Cases))]')).toBe(true);
+    });
+
+    it('should match with NUnit.Framework prefix', () => {
+        expect(
+            DYNAMIC_SOURCE_ATTRIBUTE_REGEX.test('[NUnit.Framework.TestCaseSource(typeof(MySource))]'),
+        ).toBe(true);
+    });
+
+    it('should match with leading whitespace', () => {
+        expect(
+            DYNAMIC_SOURCE_ATTRIBUTE_REGEX.test('    [TestCaseSource(nameof(GetData))]'),
+        ).toBe(true);
+    });
+
+    it('should match with whitespace inside brackets', () => {
+        expect(
+            DYNAMIC_SOURCE_ATTRIBUTE_REGEX.test('[  TestCaseSource(nameof(Cases))]'),
+        ).toBe(true);
+    });
+
+    it('should not match [TestCase(...)]', () => {
+        expect(DYNAMIC_SOURCE_ATTRIBUTE_REGEX.test('[TestCase(1, 2)]')).toBe(false);
+    });
+
+    it('should not match [Test]', () => {
+        expect(DYNAMIC_SOURCE_ATTRIBUTE_REGEX.test('[Test]')).toBe(false);
+    });
+
+    it('should not match plain code', () => {
+        expect(DYNAMIC_SOURCE_ATTRIBUTE_REGEX.test('var x = TestCaseSource;')).toBe(false);
     });
 });

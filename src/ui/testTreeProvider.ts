@@ -6,7 +6,7 @@ export type TestNodeType = 'project' | 'namespace' | 'class' | 'method' | 'param
 export type TestState = 'none' | 'running' | 'passed' | 'failed' | 'skipped';
 
 export class TestTreeNode {
-    readonly children: TestTreeNode[] = [];
+    private readonly _children: TestTreeNode[] = [];
     state: TestState = 'none';
     errorMessage?: string;
     stackTrace?: string;
@@ -21,6 +21,14 @@ export class TestTreeNode {
         public readonly nodeType: TestNodeType,
         public readonly fqn: string,
     ) {}
+
+    get children(): readonly TestTreeNode[] {
+        return this._children;
+    }
+
+    addChild(child: TestTreeNode): void {
+        this._children.push(child);
+    }
 
     get contextValue(): string {
         return `testNode.${this.nodeType}.${this.state}`;
@@ -83,7 +91,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
         if (!element) {
             return this.roots;
         }
-        return element.children;
+        return [...element.children];
     }
 
     getParent(element: TestTreeNode): TestTreeNode | undefined {
@@ -191,10 +199,10 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
                                 caseNode.sourceUri = testCase.sourceUri;
                                 caseNode.sourceLine = testCase.sourceLine;
                                 this.allNodes.set(caseNode.id, caseNode);
-                                methodNode.children.push(caseNode);
+                                methodNode.addChild(caseNode);
                             }
 
-                            classNode.children.push(methodNode);
+                            classNode.addChild(methodNode);
                         } else {
                             const test = cases[0];
                             const methodNode = new TestTreeNode(
@@ -207,14 +215,14 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
                             methodNode.sourceUri = test.sourceUri;
                             methodNode.sourceLine = test.sourceLine;
                             this.allNodes.set(methodNode.id, methodNode);
-                            classNode.children.push(methodNode);
+                            classNode.addChild(methodNode);
                         }
                     }
 
-                    nsNode.children.push(classNode);
+                    nsNode.addChild(classNode);
                 }
 
-                projectNode.children.push(nsNode);
+                projectNode.addChild(nsNode);
             }
 
             this.roots.push(projectNode);
@@ -314,7 +322,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
         caseNode.sourceLine = parentNode.sourceLine;
 
         this.allNodes.set(caseNode.id, caseNode);
-        parentNode.children.push(caseNode);
+        parentNode.addChild(caseNode);
         return caseNode;
     }
 

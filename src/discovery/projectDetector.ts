@@ -12,7 +12,7 @@ const TEST_FRAMEWORK_PACKAGES = [
     'nunit3testadapter',
     'xunit.runner.visualstudio',
     'mstest.testadapter',
-];
+] as const;
 
 export interface TestProject {
     csprojPath: string;

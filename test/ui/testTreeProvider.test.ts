@@ -469,3 +469,53 @@ describe('TestTreeProvider.getNodeById', () => {
         expect(found).toBeUndefined();
     });
 });
+
+describe('TestTreeProvider.getTreeItem', () => {
+    it('should return Collapsed state for nodes with children', () => {
+        const provider = buildSingleProjectTree('Proj', [makeTest('NS', 'Cls', 'Test1')]);
+        const root = provider.getRoots()[0];
+
+        const treeItem = provider.getTreeItem(root);
+
+        expect(treeItem.collapsibleState).toBe(1); // Collapsed
+    });
+
+    it('should return None state for leaf nodes', () => {
+        const provider = buildSingleProjectTree('Proj', [makeTest('NS', 'Cls', 'Test1')]);
+        const method = provider.getAllMethodNodes()[0];
+
+        const treeItem = provider.getTreeItem(method);
+
+        expect(treeItem.collapsibleState).toBe(0); // None
+    });
+
+    it('should set Collapsed state at every non-leaf level', () => {
+        const provider = buildSingleProjectTree('Proj', [makeTest('NS', 'Cls', 'Test1')]);
+        const root = provider.getRoots()[0];
+        const nsNode = root.children[0];
+        const classNode = nsNode.children[0];
+
+        expect(provider.getTreeItem(root).collapsibleState).toBe(1); // Collapsed
+        expect(provider.getTreeItem(nsNode).collapsibleState).toBe(1); // Collapsed
+        expect(provider.getTreeItem(classNode).collapsibleState).toBe(1); // Collapsed
+    });
+
+    it('should set id on the tree item', () => {
+        const provider = buildSingleProjectTree('Proj', [makeTest('NS', 'Cls', 'Test1')]);
+        const root = provider.getRoots()[0];
+
+        const treeItem = provider.getTreeItem(root);
+
+        expect(treeItem.id).toBe(root.id);
+    });
+
+    it('should show duration in description for method nodes', () => {
+        const provider = buildSingleProjectTree('Proj', [makeTest('NS', 'Cls', 'Test1')]);
+        const method = provider.getAllMethodNodes()[0];
+        method.duration = 42;
+
+        const treeItem = provider.getTreeItem(method);
+
+        expect(treeItem.description).toBe('42ms');
+    });
+});

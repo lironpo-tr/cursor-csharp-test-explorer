@@ -14,6 +14,20 @@ A VS Code / Cursor extension that discovers, runs, and debugs C# tests from a de
 - **Filter** — Use the sidebar filter bar to search tests by name
 - **Stop Run** — Cancel an in-progress test run from the view toolbar
 
+## Test Status Icons
+
+Each test node in the sidebar displays an icon that reflects its current state:
+
+| Icon | Meaning |
+|------|---------|
+| $(pass) Green checkmark | **Passed** — test executed successfully |
+| $(error) Red circle | **Failed** — test threw an error or assertion failure |
+| $(debug-step-over) Yellow arrow | **Skipped** — test was ignored or filtered out |
+| $(loading~spin) Spinner | **Running** — test execution is in progress |
+| $(circle-outline) Empty circle | **Not run** — test has been discovered but not yet executed |
+
+Parent nodes (projects, namespaces, classes) aggregate the state of their children: if any child fails the parent shows failed, if all pass it shows passed, and so on.
+
 ## Requirements
 
 - **.NET SDK** with the `dotnet` CLI on PATH (or configure `csharpTestExplorer.dotnetPath`)

@@ -110,12 +110,7 @@ function makeProject(name: string, csprojPath: string): TestProject {
     return { projectName: name, csprojPath, projectDir: csprojPath.replace(/[/\\][^/\\]+$/, '') };
 }
 
-function makeTest(
-    ns: string,
-    cls: string,
-    method: string,
-    csprojPath: string,
-): DiscoveredTest {
+function makeTest(ns: string, cls: string, method: string): DiscoveredTest {
     return {
         fullyQualifiedName: `${ns}.${cls}.${method}`,
         namespace: ns,
@@ -126,39 +121,59 @@ function makeTest(
     } as DiscoveredTest;
 }
 
+interface ProjectSpec {
+    project: TestProject;
+    tests: DiscoveredTest[];
+}
+
+function buildScenario(...specs: ProjectSpec[]): CSharpTestController {
+    const projects = specs.map(s => s.project);
+    const testsByProject = new Map<string, DiscoveredTest[]>();
+    for (const s of specs) {
+        testsByProject.set(s.project.csprojPath, s.tests);
+    }
+    return buildControllerWithProjects(projects, testsByProject);
+}
+
+function projectWithTest(name: string, ns: string, cls: string, method: string): ProjectSpec {
+    return {
+        project: makeProject(name, `/repo/${name}/${name}.csproj`),
+        tests: [makeTest(ns, cls, method)],
+    };
+}
+
+function failOnNthCall(n: number, errorMessage: string) {
+    return () => {
+        const callIndex = mockRunDotnet.mock.calls.length;
+        if (callIndex === n) {
+            return Promise.reject(new Error(errorMessage));
+        }
+        return Promise.resolve({ exitCode: 0, stdout: '', stderr: '' });
+    };
+}
+
+function trxResult(testName: string, outcome: string) {
+    return {
+        results: [{ testName, outcome }],
+        passed: outcome === 'Passed' ? 1 : 0,
+        failed: outcome === 'Failed' ? 1 : 0,
+        skipped: 0,
+    };
+}
+
 describe('runAll — per-project error isolation', () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
     it('should continue running remaining projects when one project fails', async () => {
-        const projectA = makeProject('ProjectA', '/repo/ProjectA/ProjectA.csproj');
-        const projectB = makeProject('ProjectB', '/repo/ProjectB/ProjectB.csproj');
+        const controller = buildScenario(
+            projectWithTest('ProjectA', 'NsA', 'ClassA', 'Test1'),
+            projectWithTest('ProjectB', 'NsB', 'ClassB', 'Test2'),
+        );
 
-        const testsA: DiscoveredTest[] = [makeTest('NsA', 'ClassA', 'Test1', projectA.csprojPath)];
-        const testsB: DiscoveredTest[] = [makeTest('NsB', 'ClassB', 'Test2', projectB.csprojPath)];
-
-        const testsByProject = new Map<string, DiscoveredTest[]>();
-        testsByProject.set(projectA.csprojPath, testsA);
-        testsByProject.set(projectB.csprojPath, testsB);
-
-        const controller = buildControllerWithProjects([projectA, projectB], testsByProject);
-
-        let callCount = 0;
-        mockRunDotnet.mockImplementation(() => {
-            callCount++;
-            if (callCount === 1) {
-                return Promise.reject(new Error('dotnet not found'));
-            }
-            return Promise.resolve({ exitCode: 0, stdout: '', stderr: '' });
-        });
-
-        mockParseTrxFile.mockResolvedValue({
-            results: [{ testName: 'NsB.ClassB.Test2', outcome: 'Passed' }],
-            passed: 1,
-            failed: 0,
-            skipped: 0,
-        });
+        mockRunDotnet.mockImplementation(failOnNthCall(1, 'dotnet not found'));
+        mockParseTrxFile.mockResolvedValue(trxResult('NsB.ClassB.Test2', 'Passed'));
 
         await controller.runAll();
 
@@ -166,33 +181,13 @@ describe('runAll — per-project error isolation', () => {
     });
 
     it('should mark failed project nodes as failed and successful project nodes as passed', async () => {
-        const projectA = makeProject('ProjectA', '/repo/ProjectA/ProjectA.csproj');
-        const projectB = makeProject('ProjectB', '/repo/ProjectB/ProjectB.csproj');
+        const controller = buildScenario(
+            projectWithTest('ProjectA', 'NsA', 'ClassA', 'Test1'),
+            projectWithTest('ProjectB', 'NsB', 'ClassB', 'Test2'),
+        );
 
-        const testsA: DiscoveredTest[] = [makeTest('NsA', 'ClassA', 'Test1', projectA.csprojPath)];
-        const testsB: DiscoveredTest[] = [makeTest('NsB', 'ClassB', 'Test2', projectB.csprojPath)];
-
-        const testsByProject = new Map<string, DiscoveredTest[]>();
-        testsByProject.set(projectA.csprojPath, testsA);
-        testsByProject.set(projectB.csprojPath, testsB);
-
-        const controller = buildControllerWithProjects([projectA, projectB], testsByProject);
-
-        let callCount = 0;
-        mockRunDotnet.mockImplementation(() => {
-            callCount++;
-            if (callCount === 1) {
-                return Promise.reject(new Error('Build failed'));
-            }
-            return Promise.resolve({ exitCode: 0, stdout: '', stderr: '' });
-        });
-
-        mockParseTrxFile.mockResolvedValue({
-            results: [{ testName: 'NsB.ClassB.Test2', outcome: 'Passed' }],
-            passed: 1,
-            failed: 0,
-            skipped: 0,
-        });
+        mockRunDotnet.mockImplementation(failOnNthCall(1, 'Build failed'));
+        mockParseTrxFile.mockResolvedValue(trxResult('NsB.ClassB.Test2', 'Passed'));
 
         await controller.runAll();
 
@@ -206,42 +201,20 @@ describe('runAll — per-project error isolation', () => {
     });
 
     it('should run all three projects even when the middle one fails', async () => {
-        const projectA = makeProject('ProjectA', '/repo/ProjectA/ProjectA.csproj');
-        const projectB = makeProject('ProjectB', '/repo/ProjectB/ProjectB.csproj');
-        const projectC = makeProject('ProjectC', '/repo/ProjectC/ProjectC.csproj');
-
-        const testsA: DiscoveredTest[] = [makeTest('NsA', 'ClassA', 'Test1', projectA.csprojPath)];
-        const testsB: DiscoveredTest[] = [makeTest('NsB', 'ClassB', 'Test2', projectB.csprojPath)];
-        const testsC: DiscoveredTest[] = [makeTest('NsC', 'ClassC', 'Test3', projectC.csprojPath)];
-
-        const testsByProject = new Map<string, DiscoveredTest[]>();
-        testsByProject.set(projectA.csprojPath, testsA);
-        testsByProject.set(projectB.csprojPath, testsB);
-        testsByProject.set(projectC.csprojPath, testsC);
-
-        const controller = buildControllerWithProjects(
-            [projectA, projectB, projectC],
-            testsByProject,
+        const controller = buildScenario(
+            projectWithTest('ProjectA', 'NsA', 'ClassA', 'Test1'),
+            projectWithTest('ProjectB', 'NsB', 'ClassB', 'Test2'),
+            projectWithTest('ProjectC', 'NsC', 'ClassC', 'Test3'),
         );
 
-        let callCount = 0;
-        mockRunDotnet.mockImplementation(() => {
-            callCount++;
-            if (callCount === 2) {
-                return Promise.reject(new Error('ProjectB build error'));
-            }
-            return Promise.resolve({ exitCode: 0, stdout: '', stderr: '' });
-        });
+        mockRunDotnet.mockImplementation(failOnNthCall(2, 'ProjectB build error'));
 
-        mockParseTrxFile.mockImplementation((trxPath: string) => {
-            return Promise.resolve({
-                results: callCount <= 1
-                    ? [{ testName: 'NsA.ClassA.Test1', outcome: 'Passed' }]
-                    : [{ testName: 'NsC.ClassC.Test3', outcome: 'Passed' }],
-                passed: 1,
-                failed: 0,
-                skipped: 0,
-            });
+        mockParseTrxFile.mockImplementation(() => {
+            const callIndex = mockParseTrxFile.mock.calls.length;
+            if (callIndex === 1) {
+                return Promise.resolve(trxResult('NsA.ClassA.Test1', 'Passed'));
+            }
+            return Promise.resolve(trxResult('NsC.ClassC.Test3', 'Passed'));
         });
 
         await controller.runAll();
@@ -258,22 +231,32 @@ describe('runAll — per-project error isolation', () => {
         expect(testC?.state).toBe('passed');
     });
 
-    it('should stop all projects when cancellation occurs', async () => {
-        const projectA = makeProject('ProjectA', '/repo/ProjectA/ProjectA.csproj');
-        const projectB = makeProject('ProjectB', '/repo/ProjectB/ProjectB.csproj');
+    it('should stop all projects when cancellation error occurs', async () => {
+        const controller = buildScenario(
+            projectWithTest('ProjectA', 'NsA', 'ClassA', 'Test1'),
+            projectWithTest('ProjectB', 'NsB', 'ClassB', 'Test2'),
+        );
 
-        const testsA: DiscoveredTest[] = [makeTest('NsA', 'ClassA', 'Test1', projectA.csprojPath)];
-        const testsB: DiscoveredTest[] = [makeTest('NsB', 'ClassB', 'Test2', projectB.csprojPath)];
+        mockRunDotnet.mockRejectedValue(new Error('Cancelled'));
 
-        const testsByProject = new Map<string, DiscoveredTest[]>();
-        testsByProject.set(projectA.csprojPath, testsA);
-        testsByProject.set(projectB.csprojPath, testsB);
+        await controller.runAll();
 
-        const controller = buildControllerWithProjects([projectA, projectB], testsByProject);
+        expect(mockRunDotnet).toHaveBeenCalledTimes(1);
+    });
+
+    it('should skip remaining projects when token is already cancelled', async () => {
+        const controller = buildScenario(
+            projectWithTest('ProjectA', 'NsA', 'ClassA', 'Test1'),
+            projectWithTest('ProjectB', 'NsB', 'ClassB', 'Test2'),
+        );
 
         mockRunDotnet.mockImplementation(() => {
-            return Promise.reject(new Error('Cancelled'));
+            // Simulate cancellation triggered during the first project's run
+            (controller as any).activeCts.cancel();
+            return Promise.resolve({ exitCode: 0, stdout: '', stderr: '' });
         });
+
+        mockParseTrxFile.mockResolvedValue(trxResult('NsA.ClassA.Test1', 'Passed'));
 
         await controller.runAll();
 
@@ -281,30 +264,17 @@ describe('runAll — per-project error isolation', () => {
     });
 
     it('should succeed when all projects pass without errors', async () => {
-        const projectA = makeProject('ProjectA', '/repo/ProjectA/ProjectA.csproj');
-        const projectB = makeProject('ProjectB', '/repo/ProjectB/ProjectB.csproj');
-
-        const testsA: DiscoveredTest[] = [makeTest('NsA', 'ClassA', 'Test1', projectA.csprojPath)];
-        const testsB: DiscoveredTest[] = [makeTest('NsB', 'ClassB', 'Test2', projectB.csprojPath)];
-
-        const testsByProject = new Map<string, DiscoveredTest[]>();
-        testsByProject.set(projectA.csprojPath, testsA);
-        testsByProject.set(projectB.csprojPath, testsB);
-
-        const controller = buildControllerWithProjects([projectA, projectB], testsByProject);
+        const controller = buildScenario(
+            projectWithTest('ProjectA', 'NsA', 'ClassA', 'Test1'),
+            projectWithTest('ProjectB', 'NsB', 'ClassB', 'Test2'),
+        );
 
         mockRunDotnet.mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' });
 
-        let parseTrxCallCount = 0;
         mockParseTrxFile.mockImplementation(() => {
-            parseTrxCallCount++;
-            const testName = parseTrxCallCount === 1 ? 'NsA.ClassA.Test1' : 'NsB.ClassB.Test2';
-            return Promise.resolve({
-                results: [{ testName, outcome: 'Passed' }],
-                passed: 1,
-                failed: 0,
-                skipped: 0,
-            });
+            const callIndex = mockParseTrxFile.mock.calls.length;
+            const testName = callIndex === 1 ? 'NsA.ClassA.Test1' : 'NsB.ClassB.Test2';
+            return Promise.resolve(trxResult(testName, 'Passed'));
         });
 
         await controller.runAll();
@@ -316,14 +286,9 @@ describe('runAll — per-project error isolation', () => {
     });
 
     it('should not leave nodes in running state after completion', async () => {
-        const projectA = makeProject('ProjectA', '/repo/ProjectA/ProjectA.csproj');
-
-        const testsA: DiscoveredTest[] = [makeTest('NsA', 'ClassA', 'Test1', projectA.csprojPath)];
-
-        const testsByProject = new Map<string, DiscoveredTest[]>();
-        testsByProject.set(projectA.csprojPath, testsA);
-
-        const controller = buildControllerWithProjects([projectA], testsByProject);
+        const controller = buildScenario(
+            projectWithTest('ProjectA', 'NsA', 'ClassA', 'Test1'),
+        );
 
         mockRunDotnet.mockRejectedValue(new Error('Spawn failed'));
 

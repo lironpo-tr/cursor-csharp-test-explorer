@@ -23,11 +23,27 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             controller?.runAll();
         }),
 
-        vscode.commands.registerCommand('csharpTestExplorer.runTest', (node: TestTreeNode) => {
-            if (node) {
-                controller?.runNode(node);
-            }
-        }),
+        vscode.commands.registerCommand(
+            'csharpTestExplorer.runTest',
+            (node: TestTreeNode, selectedNodes?: TestTreeNode[]) => {
+                if (selectedNodes && selectedNodes.length > 1) {
+                    controller?.runNodes(selectedNodes);
+                } else if (node) {
+                    controller?.runNode(node);
+                }
+            },
+        ),
+
+        vscode.commands.registerCommand(
+            'csharpTestExplorer.runSelected',
+            (_node?: TestTreeNode, selectedNodes?: TestTreeNode[]) => {
+                if (selectedNodes && selectedNodes.length > 0) {
+                    controller?.runNodes(selectedNodes);
+                } else {
+                    controller?.runSelected();
+                }
+            },
+        ),
 
         vscode.commands.registerCommand('csharpTestExplorer.debugTest', (node: TestTreeNode) => {
             if (node) {

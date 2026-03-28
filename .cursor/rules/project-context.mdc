@@ -49,7 +49,8 @@ src/
 ## Commands (registered in extension.ts)
 - `csharpTestExplorer.refreshTests` — re-discover all tests
 - `csharpTestExplorer.runAll` — run every discovered test
-- `csharpTestExplorer.runTest` — run a specific tree node
+- `csharpTestExplorer.runTest` — run a specific tree node (supports multi-select via context menu)
+- `csharpTestExplorer.runSelected` — run all currently selected tests in the tree
 - `csharpTestExplorer.debugTest` — debug a specific tree node
 - `csharpTestExplorer.showOutput` — open the output channel
 - `csharpTestExplorer.goToTest` — navigate to a test's source location

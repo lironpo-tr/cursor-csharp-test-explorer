@@ -47,7 +47,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
     getTreeItem(element: TestTreeNode): vscode.TreeItem {
         const collapsible =
             element.children.length > 0
-                ? vscode.TreeItemCollapsibleState.Expanded
+                ? vscode.TreeItemCollapsibleState.Collapsed
                 : vscode.TreeItemCollapsibleState.None;
 
         const item = new vscode.TreeItem(element.label, collapsible);

@@ -100,6 +100,13 @@
                 "icon": "$(search)"
             },
             {
+                "command": "csharpTestExplorer.runSelected",
+                "title": "Run Selected Tests",
+                "description": "Run all currently selected tests in the tree",
+                "category": "C# Test Explorer",
+                "icon": "$(run-all)"
+            },
+            {
                 "command": "csharpTestExplorer.clearFilter",
                 "title": "Clear Filter",
                 "description": "Remove the active test filter and restore the full tree",
@@ -143,22 +150,32 @@
             "view/item/context": [
                 {
                     "command": "csharpTestExplorer.runTest",
-                    "when": "view == csharpTestExplorerView",
+                    "when": "view == csharpTestExplorerView && !listMultiSelection",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "csharpTestExplorer.runSelected",
+                    "when": "view == csharpTestExplorerView && listMultiSelection",
                     "group": "inline@1"
                 },
                 {
                     "command": "csharpTestExplorer.debugTest",
-                    "when": "view == csharpTestExplorerView",
+                    "when": "view == csharpTestExplorerView && !listMultiSelection",
                     "group": "inline@2"
                 },
                 {
                     "command": "csharpTestExplorer.runTest",
-                    "when": "view == csharpTestExplorerView",
+                    "when": "view == csharpTestExplorerView && !listMultiSelection",
+                    "group": "1_run@1"
+                },
+                {
+                    "command": "csharpTestExplorer.runSelected",
+                    "when": "view == csharpTestExplorerView && listMultiSelection",
                     "group": "1_run@1"
                 },
                 {
                     "command": "csharpTestExplorer.debugTest",
-                    "when": "view == csharpTestExplorerView",
+                    "when": "view == csharpTestExplorerView && !listMultiSelection",
                     "group": "1_run@2"
                 },
                 {

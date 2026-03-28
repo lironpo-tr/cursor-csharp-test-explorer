@@ -46,7 +46,14 @@ export function markRunningNodesAsFailed(
     err: unknown,
     treeProvider: TestTreeProvider,
 ): void {
-    const methodNodes = collectMethodNodes(node);
+    markMethodNodesFailed(collectMethodNodes(node), err, treeProvider);
+}
+
+function markMethodNodesFailed(
+    methodNodes: TestTreeNode[],
+    err: unknown,
+    treeProvider: TestTreeProvider,
+): void {
     for (const m of methodNodes) {
         if (m.state === 'running') {
             applyResultState(
@@ -76,31 +83,131 @@ export async function executeTests(
         return;
     }
 
+    const filter = buildFilterForNode(node);
+    const methodNodes = collectMethodNodes(node);
+
+    await executeTestRun(
+        node.projectPath,
+        node.label,
+        filter,
+        methodNodes,
+        token,
+        treeProvider,
+        logger,
+    );
+}
+
+export function buildFilterForNodes(nodes: TestTreeNode[]): string | undefined {
+    const expressions: string[] = [];
+
+    for (const node of nodes) {
+        const filter = buildFilterForNode(node);
+        if (!filter) {
+            return undefined;
+        }
+        expressions.push(filter);
+    }
+
+    if (expressions.length === 0) {
+        return undefined;
+    }
+
+    return expressions.length === 1
+        ? expressions[0]
+        : expressions.map((e) => `(${e})`).join(' | ');
+}
+
+export function collectAllMethodNodes(nodes: TestTreeNode[]): TestTreeNode[] {
+    const result: TestTreeNode[] = [];
+    const seen = new Set<string>();
+
+    for (const node of nodes) {
+        for (const m of collectMethodNodes(node)) {
+            if (!seen.has(m.id)) {
+                seen.add(m.id);
+                result.push(m);
+            }
+        }
+    }
+
+    return result;
+}
+
+export function groupNodesByProject(nodes: TestTreeNode[]): Map<string, TestTreeNode[]> {
+    const grouped = new Map<string, TestTreeNode[]>();
+
+    for (const node of nodes) {
+        const projectPath = node.projectPath;
+        if (!projectPath) {
+            continue;
+        }
+
+        const list = grouped.get(projectPath) ?? [];
+        list.push(node);
+        grouped.set(projectPath, list);
+    }
+
+    return grouped;
+}
+
+export async function executeTestsForNodes(
+    nodes: TestTreeNode[],
+    token: vscode.CancellationToken,
+    treeProvider: TestTreeProvider,
+    logger: Logger,
+): Promise<void> {
+    const byProject = groupNodesByProject(nodes);
+
+    for (const [projectPath, projectNodes] of byProject) {
+        if (token.isCancellationRequested) {
+            break;
+        }
+
+        const filter = buildFilterForNodes(projectNodes);
+        const methodNodes = collectAllMethodNodes(projectNodes);
+        const label = projectNodes.map((n) => n.label).join(', ');
+
+        await executeTestRun(projectPath, label, filter, methodNodes, token, treeProvider, logger);
+    }
+}
+
+async function executeTestRun(
+    projectPath: string,
+    label: string,
+    filter: string | undefined,
+    methodNodes: TestTreeNode[],
+    token: vscode.CancellationToken,
+    treeProvider: TestTreeProvider,
+    logger: Logger,
+): Promise<void> {
+    if (token.isCancellationRequested) {
+        return;
+    }
+
     let projectExists = false;
     try {
-        await fs.access(node.projectPath);
+        await fs.access(projectPath);
         projectExists = true;
     } catch {
         // file does not exist or is inaccessible
     }
 
     if (!projectExists) {
-        const msg = `Project file not found: ${node.projectPath}. Re-discover tests to refresh the project list.`;
+        const msg = `Project file not found: ${projectPath}. Re-discover tests to refresh the project list.`;
         logger.logError(msg);
-        markRunningNodesAsFailed(node, new Error(msg), treeProvider);
+        markMethodNodesFailed(methodNodes, new Error(msg), treeProvider);
         return;
     }
 
-    const projectDir = path.dirname(node.projectPath);
+    const projectDir = path.dirname(projectPath);
     const trxDir = path.join(os.tmpdir(), RESULTS_DIR_NAME, Date.now().toString());
     await fs.mkdir(trxDir, { recursive: true });
     const trxFileName = 'results.trx';
 
-    const args = ['test', node.projectPath, '--no-restore'];
+    const args = ['test', projectPath, '--no-restore'];
     args.push('--logger', `trx;LogFileName=${trxFileName}`);
     args.push('--results-directory', trxDir);
 
-    const filter = buildFilterForNode(node);
     if (filter) {
         args.push('--filter', filter);
     }
@@ -118,8 +225,8 @@ export async function executeTests(
             throw err;
         }
 
-        logger.logError(`dotnet test failed to execute for ${node.label}`, err);
-        markRunningNodesAsFailed(node, err, treeProvider);
+        logger.logError(`dotnet test failed to execute for ${label}`, err);
+        markMethodNodesFailed(methodNodes, err, treeProvider);
         fs.rm(trxDir, { recursive: true }).catch((cleanupErr) => {
             logger.logTrace(`Failed to clean up TRX directory ${trxDir}: ${cleanupErr}`);
         });
@@ -130,7 +237,6 @@ export async function executeTests(
         return;
     }
 
-    const methodNodes = collectMethodNodes(node);
     const trxPath = await findTrxFile(trxDir);
 
     if (!trxPath) {

@@ -5,7 +5,9 @@ import { TestTreeProvider, TestTreeNode } from './ui/testTreeProvider';
 import { StatusBarManager } from './ui/statusBarManager';
 import {
     executeTests,
+    executeTestsForNodes,
     collectMethodNodes,
+    collectAllMethodNodes,
     markRunningNodesAsFailed,
 } from './execution/testRunner';
 import { launchDebugSession } from './debug/debugLauncher';
@@ -35,6 +37,7 @@ export class CSharpTestController implements vscode.Disposable {
         this.treeView = vscode.window.createTreeView('csharpTestExplorerView', {
             treeDataProvider: this.treeProvider,
             showCollapseAll: true,
+            canSelectMany: true,
         });
 
         this.disposables.push(this.treeView, this.statusBar, this.treeProvider);
@@ -172,6 +175,51 @@ export class CSharpTestController implements vscode.Disposable {
         } finally {
             this.finishRun();
         }
+    }
+
+    async runNodes(nodes: readonly TestTreeNode[]): Promise<void> {
+        const validNodes = nodes.filter((n) => n.projectPath);
+        if (validNodes.length === 0) {
+            vscode.window.showErrorMessage(
+                'No valid test nodes selected. Try refreshing the test list.',
+            );
+            return;
+        }
+
+        this.startRun();
+        const methodNodes = collectAllMethodNodes(validNodes);
+        for (const m of methodNodes) {
+            m.state = 'running';
+        }
+        this.treeProvider.refresh();
+
+        try {
+            await executeTestsForNodes(validNodes, this.activeCts!.token, this.treeProvider, this.logger);
+        } catch (err) {
+            if (!this.isCancelError(err)) {
+                this.logger.logError('Run failed', err);
+                for (const node of validNodes) {
+                    markRunningNodesAsFailed(node, err, this.treeProvider);
+                }
+            }
+        } finally {
+            this.finishRun();
+        }
+    }
+
+    async runSelected(): Promise<void> {
+        const selection = this.treeView.selection;
+        if (selection.length === 0) {
+            vscode.window.showInformationMessage('No tests selected. Select tests in the tree first.');
+            return;
+        }
+
+        if (selection.length === 1) {
+            await this.runNode(selection[0]);
+            return;
+        }
+
+        await this.runNodes(selection);
     }
 
     async debugNode(node: TestTreeNode): Promise<void> {

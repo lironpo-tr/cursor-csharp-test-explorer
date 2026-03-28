@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.8.1](https://github.com/lironpo-tr/cursor-csharp-test-explorer/compare/cursor-csharp-test-explorer-v0.8.0...cursor-csharp-test-explorer-v0.8.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* mark entire subtree as Running during test execution ([b5dc2a1](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/b5dc2a14295f930215a49184a7b6d607690a4462)), closes [#39](https://github.com/lironpo-tr/cursor-csharp-test-explorer/issues/39)
+* match TestCaseSource results to discovered test nodes ([ac32bd0](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/ac32bd07831c4a8feab57a1bf673305f05f1b72e))
+* match TestCaseSource results to discovered test nodes ([f9b735e](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/f9b735e5e06a6f9f898bf0d1cd53e078b766bcae))
+* parent Running state + docs: user-facing README ([571932a](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/571932a3e4d26e0e0a15b77afd6ad4908cadba71))
+
+
+### Documentation
+
+* restructure README as user-facing Details page ([6044497](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/6044497af5850546d2a7af410670727d015643fe)), closes [#42](https://github.com/lironpo-tr/cursor-csharp-test-explorer/issues/42)
+
+
+### Tests
+
+* add multi-select result matching coverage for issue [#38](https://github.com/lironpo-tr/cursor-csharp-test-explorer/issues/38) ([b195563](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/b1955633f6143a819a9a534339380faf026740f4))
+* verify multi-select test run results work correctly ([a2c6487](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/a2c64874e4d8da1c8606fb2e30f87dbb7085c51d))
+
 ## [0.8.0](https://github.com/lironpo-tr/cursor-csharp-test-explorer/compare/cursor-csharp-test-explorer-v0.7.0...cursor-csharp-test-explorer-v0.8.0) (2026-03-28)
 
 

@@ -1,14 +1,16 @@
 import * as vscode from 'vscode';
 import { CSharpTestController } from './testController';
 import { TestTreeNode } from './ui/testTreeProvider';
-import { disposeChannel, log, showOutput } from './utils/outputChannel';
+import { createLogger, OutputChannelLogger } from './utils/outputChannel';
 
 let controller: CSharpTestController | undefined;
+let logger: OutputChannelLogger | undefined;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-    log('C# Test Explorer activating...');
+    logger = createLogger();
+    logger.log('C# Test Explorer activating...');
 
-    controller = new CSharpTestController(context);
+    controller = new CSharpTestController(context, logger);
     context.subscriptions.push(controller);
 
     // Register commands
@@ -34,7 +36,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         }),
 
         vscode.commands.registerCommand('csharpTestExplorer.showOutput', () => {
-            showOutput();
+            logger?.showOutput();
         }),
 
         vscode.commands.registerCommand('csharpTestExplorer.goToTest', (node: TestTreeNode) => {
@@ -62,7 +64,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             clearTimeout(debounceTimer);
         }
         debounceTimer = setTimeout(() => {
-            log('File change detected, re-discovering tests...');
+            logger?.log('File change detected, re-discovering tests...');
             controller?.discoverAllTests();
         }, 3000);
     };
@@ -83,11 +85,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         await controller.discoverAllTests();
     }
 
-    log('C# Test Explorer activated.');
+    logger.log('C# Test Explorer activated.');
 }
 
 export function deactivate(): void {
     controller?.dispose();
     controller = undefined;
-    disposeChannel();
+    logger?.dispose();
+    logger = undefined;
 }

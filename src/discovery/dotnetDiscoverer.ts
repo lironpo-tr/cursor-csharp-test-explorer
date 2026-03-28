@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
-import { log, logError } from '../utils/outputChannel';
+import { Logger } from '../utils/logger';
 import { TestProject } from './projectDetector';
 import {
     TEST_ATTRIBUTE_REGEX,
@@ -25,6 +25,7 @@ export interface DiscoveredTest {
 
 export async function discoverTests(
     project: TestProject,
+    logger: Logger,
     token?: vscode.CancellationToken,
 ): Promise<DiscoveredTest[]> {
     const tests: DiscoveredTest[] = [];
@@ -48,11 +49,11 @@ export async function discoverTests(
             const fileMethods = parseTestMethods(content, fileUri, project);
             tests.push(...fileMethods);
         } catch (err) {
-            logError(`Failed to parse ${fileUri.fsPath}`, err);
+            logger.logError(`Failed to parse ${fileUri.fsPath}`, err);
         }
     }
 
-    log(`Found ${tests.length} test(s) in ${project.projectName}`);
+    logger.log(`Found ${tests.length} test(s) in ${project.projectName}`);
     return tests;
 }
 

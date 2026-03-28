@@ -1,6 +1,6 @@
 import { TestTreeProvider, TestTreeNode, TestState } from '../ui/testTreeProvider';
 import { TrxSummary } from './trxParser';
-import { log } from '../utils/outputChannel';
+import { Logger } from '../utils/logger';
 
 export interface ResultDetails {
     errorMessage?: string;
@@ -47,6 +47,7 @@ export function matchAndApplyResults(
     summary: TrxSummary,
     methodNodes: TestTreeNode[],
     treeProvider: TestTreeProvider,
+    logger: Logger,
 ): void {
     const methodsByName = new Map<string, TestTreeNode[]>();
     for (const m of methodNodes) {
@@ -117,11 +118,11 @@ export function matchAndApplyResults(
         }
 
         if (!matched) {
-            log(`Unmatched result: ${tr.testName} (${tr.outcome})`);
+            logger.log(`Unmatched result: ${tr.testName} (${tr.outcome})`);
         }
     }
 
-    log(
+    logger.log(
         `Results: ${summary.passed} passed, ${summary.failed} failed, ${summary.skipped} skipped`,
     );
 }

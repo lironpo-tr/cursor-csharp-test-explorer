@@ -46,14 +46,14 @@ vi.mock('vscode', () => {
     };
 });
 
-vi.mock('../../src/utils/outputChannel', () => ({
-    log: vi.fn(),
-    logError: vi.fn(),
-}));
-
 import { TestTreeProvider, TestTreeNode } from '../../src/ui/testTreeProvider';
 import { applyResultState, matchAndApplyResults } from '../../src/execution/resultMatcher';
 import type { TrxSummary } from '../../src/execution/trxParser';
+import type { Logger } from '../../src/utils/logger';
+
+function createMockLogger(): Logger {
+    return { log: vi.fn(), logError: vi.fn(), showOutput: vi.fn() };
+}
 
 function makeMethodNode(fqn: string, projectPath = '/proj.csproj'): TestTreeNode {
     const node = new TestTreeNode(`method:${projectPath}:${fqn}`, fqn.split('.').pop()!, 'method', fqn);
@@ -105,9 +105,11 @@ describe('applyResultState', () => {
 
 describe('matchAndApplyResults', () => {
     let treeProvider: TestTreeProvider;
+    let mockLogger: Logger;
 
     beforeEach(() => {
         treeProvider = new TestTreeProvider();
+        mockLogger = createMockLogger();
         vi.clearAllMocks();
     });
 
@@ -122,7 +124,7 @@ describe('matchAndApplyResults', () => {
             results: [{ testName: 'MyNamespace.MyClass.TestMethod', outcome: 'Passed', duration: 100 }],
         };
 
-        matchAndApplyResults(summary, [node], treeProvider);
+        matchAndApplyResults(summary, [node], treeProvider, mockLogger);
 
         expect(node.state).toBe('passed');
     });
@@ -138,7 +140,7 @@ describe('matchAndApplyResults', () => {
             results: [{ testName: 'NS.Class.Add(1, 2, 3)', outcome: 'Passed', duration: 50 }],
         };
 
-        matchAndApplyResults(summary, [node], treeProvider);
+        matchAndApplyResults(summary, [node], treeProvider, mockLogger);
 
         expect(node.state).toBe('passed');
     });
@@ -161,7 +163,7 @@ describe('matchAndApplyResults', () => {
             ],
         };
 
-        matchAndApplyResults(summary, [node], treeProvider);
+        matchAndApplyResults(summary, [node], treeProvider, mockLogger);
 
         expect(node.state).toBe('failed');
         expect(node.errorMessage).toBe('Assertion failed');
@@ -178,7 +180,7 @@ describe('matchAndApplyResults', () => {
             results: [{ testName: 'NS.Class.Test1', outcome: 'Failed', duration: 0 }],
         };
 
-        matchAndApplyResults(summary, [node], treeProvider);
+        matchAndApplyResults(summary, [node], treeProvider, mockLogger);
 
         expect(node.state).toBe('failed');
     });
@@ -194,7 +196,7 @@ describe('matchAndApplyResults', () => {
             results: [{ testName: 'NS.Class.Test1', outcome: 'Error', duration: 0 }],
         };
 
-        matchAndApplyResults(summary, [node], treeProvider);
+        matchAndApplyResults(summary, [node], treeProvider, mockLogger);
 
         expect(node.state).toBe('failed');
     });
@@ -210,7 +212,7 @@ describe('matchAndApplyResults', () => {
             results: [{ testName: 'NS.Class.Test1', outcome: 'Timeout', duration: 0 }],
         };
 
-        matchAndApplyResults(summary, [node], treeProvider);
+        matchAndApplyResults(summary, [node], treeProvider, mockLogger);
 
         expect(node.state).toBe('failed');
     });
@@ -226,7 +228,7 @@ describe('matchAndApplyResults', () => {
             results: [{ testName: 'NS.Class.Test1', outcome: 'NotExecuted', duration: 0 }],
         };
 
-        matchAndApplyResults(summary, [node], treeProvider);
+        matchAndApplyResults(summary, [node], treeProvider, mockLogger);
 
         expect(node.state).toBe('skipped');
     });
@@ -246,7 +248,7 @@ describe('matchAndApplyResults', () => {
             ],
         };
 
-        matchAndApplyResults(summary, [node1, node2], treeProvider);
+        matchAndApplyResults(summary, [node1, node2], treeProvider, mockLogger);
 
         expect(node1.state).toBe('passed');
         expect(node2.state).toBe('failed');
@@ -263,7 +265,7 @@ describe('matchAndApplyResults', () => {
             results: [{ testName: 'MyNamespace.Class.TestMethod', outcome: 'Passed', duration: 50 }],
         };
 
-        matchAndApplyResults(summary, [node], treeProvider);
+        matchAndApplyResults(summary, [node], treeProvider, mockLogger);
 
         expect(node.state).toBe('passed');
     });
@@ -279,7 +281,7 @@ describe('matchAndApplyResults', () => {
             results: [{ testName: 'NS.Class.Add(1,2,3)', outcome: 'Passed', duration: 50 }],
         };
 
-        matchAndApplyResults(summary, [node], treeProvider);
+        matchAndApplyResults(summary, [node], treeProvider, mockLogger);
 
         expect(node.state).toBe('passed');
     });
@@ -295,7 +297,7 @@ describe('matchAndApplyResults', () => {
             results: [],
         };
 
-        matchAndApplyResults(summary, [node], treeProvider);
+        matchAndApplyResults(summary, [node], treeProvider, mockLogger);
 
         expect(node.state).toBe('none');
     });
@@ -310,6 +312,6 @@ describe('matchAndApplyResults', () => {
             results: [{ testName: 'NS.Class.Test1', outcome: 'Passed', duration: 50 }],
         };
 
-        expect(() => matchAndApplyResults(summary, [], treeProvider)).not.toThrow();
+        expect(() => matchAndApplyResults(summary, [], treeProvider, mockLogger)).not.toThrow();
     });
 });

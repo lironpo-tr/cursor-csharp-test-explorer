@@ -1,6 +1,6 @@
 import { spawn, ChildProcess } from 'child_process';
 import * as vscode from 'vscode';
-import { log, logError } from './outputChannel';
+import { Logger } from './logger';
 
 export interface DotnetResult {
     exitCode: number;
@@ -30,11 +30,12 @@ export function shouldBuildBeforeTest(): boolean {
 export async function runDotnet(
     args: string[],
     cwd: string,
-    token?: vscode.CancellationToken,
+    token: vscode.CancellationToken | undefined,
+    logger: Logger,
     env?: Record<string, string>,
 ): Promise<DotnetResult> {
     const dotnetPath = getDotnetPath();
-    log(`> ${dotnetPath} ${args.join(' ')}  [cwd: ${cwd}]`);
+    logger.log(`> ${dotnetPath} ${args.join(' ')}  [cwd: ${cwd}]`);
 
     return new Promise<DotnetResult>((resolve, reject) => {
         const proc = spawn(dotnetPath, args, {
@@ -66,7 +67,7 @@ export async function runDotnet(
 
         proc.on('error', (err) => {
             onCancel?.dispose();
-            logError('Failed to spawn dotnet', err);
+            logger.logError('Failed to spawn dotnet', err);
             reject(err);
         });
     });
@@ -75,10 +76,11 @@ export async function runDotnet(
 export function spawnDotnet(
     args: string[],
     cwd: string,
+    logger: Logger,
     env?: Record<string, string>,
 ): ChildProcess {
     const dotnetPath = getDotnetPath();
-    log(`> ${dotnetPath} ${args.join(' ')}  [cwd: ${cwd}]`);
+    logger.log(`> ${dotnetPath} ${args.join(' ')}  [cwd: ${cwd}]`);
 
     return spawn(dotnetPath, args, {
         cwd,

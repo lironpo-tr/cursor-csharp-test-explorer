@@ -5,7 +5,7 @@ import * as os from 'os';
 import { TestTreeProvider, TestTreeNode } from '../ui/testTreeProvider';
 import { runDotnet, getExtraArgs } from '../utils/dotnetCli';
 import { parseTrxFile } from './trxParser';
-import { log, logError } from '../utils/outputChannel';
+import { Logger } from '../utils/logger';
 import { matchAndApplyResults, applyResultState } from './resultMatcher';
 
 const RESULTS_DIR_NAME = '.cursor-test-results';
@@ -61,6 +61,7 @@ export async function executeTests(
     node: TestTreeNode,
     token: vscode.CancellationToken,
     treeProvider: TestTreeProvider,
+    logger: Logger,
 ): Promise<void> {
     if (!node.projectPath || token.isCancellationRequested) {
         return;
@@ -87,13 +88,13 @@ export async function executeTests(
 
     let result: Awaited<ReturnType<typeof runDotnet>>;
     try {
-        result = await runDotnet(args, projectDir, token);
+        result = await runDotnet(args, projectDir, token, logger);
     } catch (err) {
         if (isCancelError(err)) {
             throw err;
         }
 
-        logError(`dotnet test failed to execute for ${node.label}`, err);
+        logger.logError(`dotnet test failed to execute for ${node.label}`, err);
         markRunningNodesAsFailed(node, err, treeProvider);
         fs.rm(trxDir, { recursive: true }).catch(() => {});
         return;
@@ -108,14 +109,14 @@ export async function executeTests(
 
     try {
         const summary = await parseTrxFile(trxPath);
-        matchAndApplyResults(summary, methodNodes, treeProvider);
+        matchAndApplyResults(summary, methodNodes, treeProvider, logger);
     } catch {
-        logError('Could not read TRX results, check output for raw dotnet test output');
+        logger.logError('Could not read TRX results, check output for raw dotnet test output');
         if (result.stdout) {
-            log(result.stdout);
+            logger.log(result.stdout);
         }
         if (result.stderr) {
-            log(result.stderr);
+            logger.log(result.stderr);
         }
 
         if (result.exitCode !== 0) {

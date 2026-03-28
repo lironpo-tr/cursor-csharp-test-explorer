@@ -9,7 +9,7 @@ import {
     markRunningNodesAsFailed,
 } from './execution/testRunner';
 import { launchDebugSession } from './debug/debugLauncher';
-import { log, logError, showOutput } from './utils/outputChannel';
+import { Logger } from './utils/logger';
 
 export class CSharpTestController implements vscode.Disposable {
     readonly treeProvider: TestTreeProvider;
@@ -23,7 +23,10 @@ export class CSharpTestController implements vscode.Disposable {
     private projects: TestProject[] = [];
     private testsByProject = new Map<string, DiscoveredTest[]>();
 
-    constructor(private readonly context: vscode.ExtensionContext) {
+    constructor(
+        private readonly context: vscode.ExtensionContext,
+        private readonly logger: Logger,
+    ) {
         this.treeProvider = new TestTreeProvider();
         this.statusBar = new StatusBarManager();
 
@@ -41,7 +44,7 @@ export class CSharpTestController implements vscode.Disposable {
 
     stopRun(): void {
         if (this.activeCts) {
-            log('Cancelling test run...');
+            this.logger.log('Cancelling test run...');
             this.activeCts.cancel();
             this.activeCts.dispose();
             this.activeCts = undefined;
@@ -49,13 +52,13 @@ export class CSharpTestController implements vscode.Disposable {
 
             this.treeProvider.clearRunningStates();
             this.statusBar.updateResults(this.treeProvider.getAllMethodNodes());
-            log('Test run cancelled.');
+            this.logger.log('Test run cancelled.');
         }
     }
 
     async discoverAllTests(token?: vscode.CancellationToken): Promise<void> {
         if (this.isDiscovering) {
-            log('Discovery already in progress, skipping.');
+            this.logger.log('Discovery already in progress, skipping.');
             return;
         }
 
@@ -63,10 +66,10 @@ export class CSharpTestController implements vscode.Disposable {
         this.statusBar.showDiscovering();
 
         try {
-            this.projects = await detectTestProjects();
+            this.projects = await detectTestProjects(this.logger);
 
             if (this.projects.length === 0) {
-                log('No test projects found.');
+                this.logger.log('No test projects found.');
                 this.statusBar.showNoProjects();
                 return;
             }
@@ -79,7 +82,7 @@ export class CSharpTestController implements vscode.Disposable {
                     return;
                 }
 
-                const tests = await discoverTests(project, token);
+                const tests = await discoverTests(project, this.logger, token);
                 this.testsByProject.set(project.csprojPath, tests);
                 totalTests += tests.length;
             }
@@ -87,11 +90,11 @@ export class CSharpTestController implements vscode.Disposable {
             this.treeProvider.buildTree(this.projects, this.testsByProject);
 
             this.statusBar.showDiscovered(totalTests);
-            log(
+            this.logger.log(
                 `Discovery complete: ${totalTests} test(s) across ${this.projects.length} project(s).`,
             );
         } catch (err) {
-            logError('Discovery failed', err);
+            this.logger.logError('Discovery failed', err);
             this.statusBar.showDiscoveryFailed();
         } finally {
             this.isDiscovering = false;
@@ -100,7 +103,7 @@ export class CSharpTestController implements vscode.Disposable {
 
     async runNode(node: TestTreeNode): Promise<void> {
         if (!node.projectPath) {
-            logError('No project path for node');
+            this.logger.logError('No project path for node');
             return;
         }
 
@@ -112,10 +115,10 @@ export class CSharpTestController implements vscode.Disposable {
         this.treeProvider.refresh();
 
         try {
-            await executeTests(node, this.activeCts!.token, this.treeProvider);
+            await executeTests(node, this.activeCts!.token, this.treeProvider, this.logger);
         } catch (err) {
             if (!this.isCancelError(err)) {
-                logError('Run failed', err);
+                this.logger.logError('Run failed', err);
                 markRunningNodesAsFailed(node, err, this.treeProvider);
             }
         } finally {
@@ -139,13 +142,13 @@ export class CSharpTestController implements vscode.Disposable {
                 }
 
                 try {
-                    await executeTests(root, token, this.treeProvider);
+                    await executeTests(root, token, this.treeProvider, this.logger);
                 } catch (err) {
                     if (this.isCancelError(err)) {
                         break;
                     }
 
-                    logError(`Run failed for project: ${root.label}`, err);
+                    this.logger.logError(`Run failed for project: ${root.label}`, err);
                     markRunningNodesAsFailed(root, err, this.treeProvider);
                 }
             }
@@ -156,19 +159,19 @@ export class CSharpTestController implements vscode.Disposable {
 
     async debugNode(node: TestTreeNode): Promise<void> {
         if (!node.projectPath) {
-            logError('No project path for node');
+            this.logger.logError('No project path for node');
             return;
         }
 
         this.startRun();
         this.statusBar.showDebugging();
-        showOutput();
+        this.logger.showOutput();
 
         try {
-            await launchDebugSession(node, this.activeCts!.token);
+            await launchDebugSession(node, this.activeCts!.token, this.logger);
         } catch (err) {
             if (!this.isCancelError(err)) {
-                logError('Debug failed', err);
+                this.logger.logError('Debug failed', err);
             }
         } finally {
             this.finishRun();

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
-import { logError } from '../utils/outputChannel';
+import { Logger } from '../utils/logger';
 import {
     TEST_ATTRIBUTE_REGEX,
     CLASS_REGEX,
@@ -13,7 +13,10 @@ export interface SourceLocation {
     line: number;
 }
 
-export async function buildSourceMap(projectDir: string): Promise<Map<string, SourceLocation>> {
+export async function buildSourceMap(
+    projectDir: string,
+    logger: Logger,
+): Promise<Map<string, SourceLocation>> {
     const testMap = new Map<string, SourceLocation>();
 
     const csFiles = await vscode.workspace.findFiles(
@@ -33,7 +36,7 @@ export async function buildSourceMap(projectDir: string): Promise<Map<string, So
                 testMap.set(key, loc);
             }
         } catch (err) {
-            logError(`Failed to parse ${fileUri.fsPath}`, err);
+            logger.logError(`Failed to parse ${fileUri.fsPath}`, err);
         }
     }
 

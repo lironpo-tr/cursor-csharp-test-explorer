@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import * as os from 'os';
-import { TestTreeProvider, TestTreeNode } from '../testTreeProvider';
+import { TestTreeProvider, TestTreeNode } from '../ui/testTreeProvider';
 import { runDotnet, getExtraArgs } from '../utils/dotnetCli';
 import { parseTrxFile } from './trxParser';
 import { log, logError } from '../utils/outputChannel';

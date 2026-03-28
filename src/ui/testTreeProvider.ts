@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { DiscoveredTest } from './discovery/dotnetDiscoverer';
-import { TestProject } from './discovery/projectDetector';
+import { DiscoveredTest } from '../discovery/dotnetDiscoverer';
+import { TestProject } from '../discovery/projectDetector';
 
 export type TestNodeType = 'project' | 'namespace' | 'class' | 'method' | 'parameterizedCase';
 export type TestState = 'none' | 'running' | 'passed' | 'failed' | 'skipped';

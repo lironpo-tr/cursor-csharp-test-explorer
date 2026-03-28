@@ -1,4 +1,4 @@
-import { TestTreeProvider, TestTreeNode, TestState } from '../testTreeProvider';
+import { TestTreeProvider, TestTreeNode, TestState } from '../ui/testTreeProvider';
 import { TrxSummary } from './trxParser';
 import { log } from '../utils/outputChannel';
 

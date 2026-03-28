@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TestTreeNode } from '../testTreeProvider';
+import { TestTreeNode } from './testTreeProvider';
 
 export class StatusBarManager implements vscode.Disposable {
     private readonly statusBar: vscode.StatusBarItem;

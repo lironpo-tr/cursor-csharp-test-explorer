@@ -10,7 +10,7 @@ VS Code extension (TypeScript) that discovers, runs, and debugs C# tests (NUnit,
 
 ## Tech Stack
 - TypeScript, VS Code Extension API (^1.85.0)
-- Build: esbuild, compiled to `out/`
+- Build: tsc, compiled to `out/`
 - Activated when workspace contains `*.csproj`
 
 ## Architecture
@@ -18,8 +18,7 @@ VS Code extension (TypeScript) that discovers, runs, and debugs C# tests (NUnit,
 ```
 src/
 ├── extension.ts              # Entry point: activates CSharpTestController, registers commands
-├── testController.ts         # Core orchestrator: uses VS Code TestController API, wires discovery + execution
-├── testTreeProvider.ts       # TreeDataProvider for the sidebar test tree view
+├── testController.ts         # Core orchestrator: wires discovery + execution + debug
 ├── discovery/
 │   ├── projectDetector.ts    # Finds .csproj files in the workspace
 │   ├── dotnetDiscoverer.ts   # Runs `dotnet test --list-tests` to discover tests
@@ -33,6 +32,7 @@ src/
 ├── debug/
 │   └── debugLauncher.ts      # Launches dotnet test with debugger attached
 ├── ui/
+│   ├── testTreeProvider.ts   # TreeDataProvider for the sidebar test tree view
 │   └── statusBarManager.ts   # Status bar indicator for test runs
 └── utils/
     ├── outputChannel.ts      # Logging via VS Code OutputChannel
@@ -51,6 +51,8 @@ src/
 - `csharpTestExplorer.runTest` — run a specific tree node
 - `csharpTestExplorer.debugTest` — debug a specific tree node
 - `csharpTestExplorer.showOutput` — open the output channel
+- `csharpTestExplorer.goToTest` — navigate to a test's source location
+- `csharpTestExplorer.stopRun` — cancel an in-progress test run
 
 ## Keeping This Rule Up-to-Date
 

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { ChildProcess } from 'child_process';
-import { TestTreeNode } from '../testTreeProvider';
+import { TestTreeNode } from '../ui/testTreeProvider';
 import { getExtraArgs } from '../utils/dotnetCli';
 import { log, logError, showOutput } from '../utils/outputChannel';
 import { buildFilterForNode } from '../execution/testRunner';

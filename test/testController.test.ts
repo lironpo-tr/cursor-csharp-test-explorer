@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeTestName } from '../src/testController';
+import { normalizeTestName } from '../src/execution/resultMatcher';
 
 describe('normalizeTestName', () => {
     it('should return name unchanged when there are no parameters', () => {

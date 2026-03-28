@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { detectTestProjects, TestProject } from './discovery/projectDetector';
 import { discoverTests, DiscoveredTest } from './discovery/dotnetDiscoverer';
-import { TestTreeProvider, TestTreeNode } from './testTreeProvider';
+import { TestTreeProvider, TestTreeNode } from './ui/testTreeProvider';
 import { StatusBarManager } from './ui/statusBarManager';
 import {
     executeTests,
@@ -10,8 +10,6 @@ import {
 } from './execution/testRunner';
 import { launchDebugSession } from './debug/debugLauncher';
 import { log, logError, showOutput } from './utils/outputChannel';
-
-export { normalizeTestName } from './execution/resultMatcher';
 
 export class CSharpTestController implements vscode.Disposable {
     readonly treeProvider: TestTreeProvider;

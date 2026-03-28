@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { CSharpTestController } from './testController';
-import { TestTreeNode } from './testTreeProvider';
+import { TestTreeNode } from './ui/testTreeProvider';
 import { disposeChannel, log, showOutput } from './utils/outputChannel';
 
 let controller: CSharpTestController | undefined;

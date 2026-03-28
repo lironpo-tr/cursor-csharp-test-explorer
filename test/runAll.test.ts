@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('vscode', () => {
     const EventEmitter = class {
-        private listeners: Function[] = [];
-        event = (listener: Function) => {
+        private listeners: ((...args: unknown[]) => void)[] = [];
+        event = (listener: (...args: unknown[]) => void) => {
             this.listeners.push(listener);
             return { dispose: vi.fn() };
         };
@@ -35,16 +35,24 @@ vi.mock('vscode', () => {
                 isCancellationRequested: false,
                 onCancellationRequested: vi.fn(),
             };
-            cancel() { this.token.isCancellationRequested = true; }
+            cancel() {
+                this.token.isCancellationRequested = true;
+            }
             dispose = vi.fn();
         },
         StatusBarAlignment: { Left: 1, Right: 2 },
         TreeItem: class {
-            constructor(public label: string, public collapsibleState?: number) {}
+            constructor(
+                public label: string,
+                public collapsibleState?: number,
+            ) {}
         },
         TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
         ThemeIcon: class {
-            constructor(public id: string, public color?: any) {}
+            constructor(
+                public id: string,
+                public color?: any,
+            ) {}
         },
         ThemeColor: class {
             constructor(public id: string) {}
@@ -127,7 +135,7 @@ interface ProjectSpec {
 }
 
 function buildScenario(...specs: ProjectSpec[]): CSharpTestController {
-    const projects = specs.map(s => s.project);
+    const projects = specs.map((s) => s.project);
     const testsByProject = new Map<string, DiscoveredTest[]>();
     for (const s of specs) {
         testsByProject.set(s.project.csprojPath, s.tests);
@@ -192,8 +200,8 @@ describe('runAll — per-project error isolation', () => {
         await controller.runAll();
 
         const allMethods = controller.treeProvider.getAllMethodNodes();
-        const testA = allMethods.find(m => m.fqn === 'NsA.ClassA.Test1');
-        const testB = allMethods.find(m => m.fqn === 'NsB.ClassB.Test2');
+        const testA = allMethods.find((m) => m.fqn === 'NsA.ClassA.Test1');
+        const testB = allMethods.find((m) => m.fqn === 'NsB.ClassB.Test2');
 
         expect(testA?.state).toBe('failed');
         expect(testA?.errorMessage).toBe('Build failed');
@@ -222,9 +230,9 @@ describe('runAll — per-project error isolation', () => {
         expect(mockRunDotnet).toHaveBeenCalledTimes(3);
 
         const allMethods = controller.treeProvider.getAllMethodNodes();
-        const testA = allMethods.find(m => m.fqn === 'NsA.ClassA.Test1');
-        const testB = allMethods.find(m => m.fqn === 'NsB.ClassB.Test2');
-        const testC = allMethods.find(m => m.fqn === 'NsC.ClassC.Test3');
+        const testA = allMethods.find((m) => m.fqn === 'NsA.ClassA.Test1');
+        const testB = allMethods.find((m) => m.fqn === 'NsB.ClassB.Test2');
+        const testC = allMethods.find((m) => m.fqn === 'NsC.ClassC.Test3');
 
         expect(testA?.state).toBe('passed');
         expect(testB?.state).toBe('failed');
@@ -282,20 +290,18 @@ describe('runAll — per-project error isolation', () => {
         expect(mockRunDotnet).toHaveBeenCalledTimes(2);
 
         const allMethods = controller.treeProvider.getAllMethodNodes();
-        expect(allMethods.every(m => m.state === 'passed')).toBe(true);
+        expect(allMethods.every((m) => m.state === 'passed')).toBe(true);
     });
 
     it('should not leave nodes in running state after completion', async () => {
-        const controller = buildScenario(
-            projectWithTest('ProjectA', 'NsA', 'ClassA', 'Test1'),
-        );
+        const controller = buildScenario(projectWithTest('ProjectA', 'NsA', 'ClassA', 'Test1'));
 
         mockRunDotnet.mockRejectedValue(new Error('Spawn failed'));
 
         await controller.runAll();
 
         const allMethods = controller.treeProvider.getAllMethodNodes();
-        const runningNodes = allMethods.filter(m => m.state === 'running');
+        const runningNodes = allMethods.filter((m) => m.state === 'running');
         expect(runningNodes).toHaveLength(0);
     });
 });

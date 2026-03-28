@@ -1,7 +1,12 @@
 import * as fs from 'fs/promises';
-import { logError } from '../utils/outputChannel';
 
-export type TestOutcome = 'Passed' | 'Failed' | 'NotExecuted' | 'Inconclusive' | 'Timeout' | 'Error';
+export type TestOutcome =
+    | 'Passed'
+    | 'Failed'
+    | 'NotExecuted'
+    | 'Inconclusive'
+    | 'Timeout'
+    | 'Error';
 
 export interface TestResult {
     testName: string;
@@ -99,22 +104,33 @@ export function parseTrxXml(xml: string): TrxSummary {
 
 function mapOutcome(raw: string | undefined): TestOutcome {
     switch (raw) {
-        case 'Passed': return 'Passed';
-        case 'Failed': return 'Failed';
-        case 'NotExecuted': return 'NotExecuted';
-        case 'Inconclusive': return 'Inconclusive';
-        case 'Timeout': return 'Timeout';
-        case 'Error': return 'Error';
-        default: return 'NotExecuted';
+        case 'Passed':
+            return 'Passed';
+        case 'Failed':
+            return 'Failed';
+        case 'NotExecuted':
+            return 'NotExecuted';
+        case 'Inconclusive':
+            return 'Inconclusive';
+        case 'Timeout':
+            return 'Timeout';
+        case 'Error':
+            return 'Error';
+        default:
+            return 'NotExecuted';
     }
 }
 
 /** Parse TRX duration "HH:MM:SS.FFFFFFF" to milliseconds */
 function parseDuration(raw: string | undefined): number {
-    if (!raw) { return 0; }
+    if (!raw) {
+        return 0;
+    }
 
     const match = raw.match(/^(\d+):(\d+):(\d+)(?:\.(\d+))?$/);
-    if (!match) { return 0; }
+    if (!match) {
+        return 0;
+    }
 
     const hours = parseInt(match[1], 10);
     const minutes = parseInt(match[2], 10);
@@ -125,7 +141,9 @@ function parseDuration(raw: string | undefined): number {
 }
 
 function getArray<T>(value: T | T[] | undefined): T[] {
-    if (value === undefined || value === null) { return []; }
+    if (value === undefined || value === null) {
+        return [];
+    }
     return Array.isArray(value) ? value : [value];
 }
 

@@ -1,192 +1,203 @@
 {
-  "name": "cursor-csharp-test-explorer",
-  "displayName": "C# Test Explorer",
-  "description": "Discover, run, and debug C# tests (NUnit, xUnit, MSTest) with a sidebar tree view",
-  "version": "0.7.0",
-  "publisher": "lironpo",
-  "engines": {
-    "vscode": "^1.85.0"
-  },
-  "icon": "icon.png",
-  "categories": [
-    "Testing"
-  ],
-  "activationEvents": [
-    "workspaceContains:**/*.csproj"
-  ],
-  "main": "./out/extension.js",
-  "contributes": {
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "csharpTestExplorer",
-          "title": "C# Tests",
-          "icon": "$(beaker)"
-        }
-      ]
+    "name": "cursor-csharp-test-explorer",
+    "displayName": "C# Test Explorer",
+    "description": "Discover, run, and debug C# tests (NUnit, xUnit, MSTest) with a sidebar tree view",
+    "version": "0.7.0",
+    "publisher": "lironpo",
+    "engines": {
+        "vscode": "^1.85.0"
     },
-    "views": {
-      "csharpTestExplorer": [
-        {
-          "id": "csharpTestExplorerView",
-          "name": "Test Explorer",
-          "icon": "$(beaker)",
-          "contextualTitle": "C# Test Explorer"
-        }
-      ]
-    },
-    "viewsWelcome": [
-      {
-        "view": "csharpTestExplorerView",
-        "contents": "No C# tests discovered yet.\n[Discover Tests](command:csharpTestExplorer.refreshTests)"
-      }
+    "icon": "icon.png",
+    "categories": [
+        "Testing"
     ],
-    "commands": [
-      {
-        "command": "csharpTestExplorer.refreshTests",
-        "title": "Refresh Tests",
-        "category": "C# Test Explorer",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "csharpTestExplorer.runAll",
-        "title": "Run All Tests",
-        "category": "C# Test Explorer",
-        "icon": "$(run-all)"
-      },
-      {
-        "command": "csharpTestExplorer.runTest",
-        "title": "Run Test",
-        "category": "C# Test Explorer",
-        "icon": "$(play)"
-      },
-      {
-        "command": "csharpTestExplorer.debugTest",
-        "title": "Debug Test",
-        "category": "C# Test Explorer",
-        "icon": "$(debug-alt)"
-      },
-      {
-        "command": "csharpTestExplorer.showOutput",
-        "title": "Show Output",
-        "category": "C# Test Explorer",
-        "icon": "$(output)"
-      },
-      {
-        "command": "csharpTestExplorer.goToTest",
-        "title": "Go to Test Source",
-        "category": "C# Test Explorer",
-        "icon": "$(go-to-file)"
-      },
-      {
-        "command": "csharpTestExplorer.stopRun",
-        "title": "Stop Test Run",
-        "category": "C# Test Explorer",
-        "icon": "$(debug-stop)"
-      }
+    "activationEvents": [
+        "workspaceContains:**/*.csproj"
     ],
-    "menus": {
-      "view/title": [
-        {
-          "command": "csharpTestExplorer.stopRun",
-          "when": "view == csharpTestExplorerView && csharpTestExplorer.isRunning",
-          "group": "navigation@0"
+    "main": "./out/extension.js",
+    "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "csharpTestExplorer",
+                    "title": "C# Tests",
+                    "icon": "$(beaker)"
+                }
+            ]
         },
-        {
-          "command": "csharpTestExplorer.runAll",
-          "when": "view == csharpTestExplorerView && !csharpTestExplorer.isRunning",
-          "group": "navigation@1"
+        "views": {
+            "csharpTestExplorer": [
+                {
+                    "id": "csharpTestExplorerView",
+                    "name": "Test Explorer",
+                    "icon": "$(beaker)",
+                    "contextualTitle": "C# Test Explorer"
+                }
+            ]
         },
-        {
-          "command": "csharpTestExplorer.refreshTests",
-          "when": "view == csharpTestExplorerView",
-          "group": "navigation@2"
+        "viewsWelcome": [
+            {
+                "view": "csharpTestExplorerView",
+                "contents": "No C# tests discovered yet.\n[Discover Tests](command:csharpTestExplorer.refreshTests)"
+            }
+        ],
+        "commands": [
+            {
+                "command": "csharpTestExplorer.refreshTests",
+                "title": "Refresh Tests",
+                "category": "C# Test Explorer",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "csharpTestExplorer.runAll",
+                "title": "Run All Tests",
+                "category": "C# Test Explorer",
+                "icon": "$(run-all)"
+            },
+            {
+                "command": "csharpTestExplorer.runTest",
+                "title": "Run Test",
+                "category": "C# Test Explorer",
+                "icon": "$(play)"
+            },
+            {
+                "command": "csharpTestExplorer.debugTest",
+                "title": "Debug Test",
+                "category": "C# Test Explorer",
+                "icon": "$(debug-alt)"
+            },
+            {
+                "command": "csharpTestExplorer.showOutput",
+                "title": "Show Output",
+                "category": "C# Test Explorer",
+                "icon": "$(output)"
+            },
+            {
+                "command": "csharpTestExplorer.goToTest",
+                "title": "Go to Test Source",
+                "category": "C# Test Explorer",
+                "icon": "$(go-to-file)"
+            },
+            {
+                "command": "csharpTestExplorer.stopRun",
+                "title": "Stop Test Run",
+                "category": "C# Test Explorer",
+                "icon": "$(debug-stop)"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "csharpTestExplorer.stopRun",
+                    "when": "view == csharpTestExplorerView && csharpTestExplorer.isRunning",
+                    "group": "navigation@0"
+                },
+                {
+                    "command": "csharpTestExplorer.runAll",
+                    "when": "view == csharpTestExplorerView && !csharpTestExplorer.isRunning",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "csharpTestExplorer.refreshTests",
+                    "when": "view == csharpTestExplorerView",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "csharpTestExplorer.showOutput",
+                    "when": "view == csharpTestExplorerView",
+                    "group": "navigation@3"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "csharpTestExplorer.runTest",
+                    "when": "view == csharpTestExplorerView",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "csharpTestExplorer.debugTest",
+                    "when": "view == csharpTestExplorerView",
+                    "group": "inline@2"
+                },
+                {
+                    "command": "csharpTestExplorer.runTest",
+                    "when": "view == csharpTestExplorerView",
+                    "group": "1_run@1"
+                },
+                {
+                    "command": "csharpTestExplorer.debugTest",
+                    "when": "view == csharpTestExplorerView",
+                    "group": "1_run@2"
+                },
+                {
+                    "command": "csharpTestExplorer.goToTest",
+                    "when": "view == csharpTestExplorerView",
+                    "group": "2_nav@1"
+                }
+            ]
         },
-        {
-          "command": "csharpTestExplorer.showOutput",
-          "when": "view == csharpTestExplorerView",
-          "group": "navigation@3"
+        "configuration": {
+            "title": "C# Test Explorer",
+            "properties": {
+                "csharpTestExplorer.dotnetPath": {
+                    "type": "string",
+                    "default": "dotnet",
+                    "description": "Path to the dotnet CLI executable"
+                },
+                "csharpTestExplorer.testArguments": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Additional arguments to pass to dotnet test"
+                },
+                "csharpTestExplorer.excludeProjects": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [],
+                    "description": "Glob patterns for projects to exclude from test discovery"
+                },
+                "csharpTestExplorer.buildBeforeTest": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Build the project before running tests"
+                },
+                "csharpTestExplorer.autoDiscoverOnOpen": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Automatically discover tests when the workspace opens"
+                }
+            }
         }
-      ],
-      "view/item/context": [
-        {
-          "command": "csharpTestExplorer.runTest",
-          "when": "view == csharpTestExplorerView",
-          "group": "inline@1"
-        },
-        {
-          "command": "csharpTestExplorer.debugTest",
-          "when": "view == csharpTestExplorerView",
-          "group": "inline@2"
-        },
-        {
-          "command": "csharpTestExplorer.runTest",
-          "when": "view == csharpTestExplorerView",
-          "group": "1_run@1"
-        },
-        {
-          "command": "csharpTestExplorer.debugTest",
-          "when": "view == csharpTestExplorerView",
-          "group": "1_run@2"
-        },
-        {
-          "command": "csharpTestExplorer.goToTest",
-          "when": "view == csharpTestExplorerView",
-          "group": "2_nav@1"
-        }
-      ]
     },
-    "configuration": {
-      "title": "C# Test Explorer",
-      "properties": {
-        "csharpTestExplorer.dotnetPath": {
-          "type": "string",
-          "default": "dotnet",
-          "description": "Path to the dotnet CLI executable"
-        },
-        "csharpTestExplorer.testArguments": {
-          "type": "string",
-          "default": "",
-          "description": "Additional arguments to pass to dotnet test"
-        },
-        "csharpTestExplorer.excludeProjects": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [],
-          "description": "Glob patterns for projects to exclude from test discovery"
-        },
-        "csharpTestExplorer.buildBeforeTest": {
-          "type": "boolean",
-          "default": true,
-          "description": "Build the project before running tests"
-        },
-        "csharpTestExplorer.autoDiscoverOnOpen": {
-          "type": "boolean",
-          "default": true,
-          "description": "Automatically discover tests when the workspace opens"
-        }
-      }
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "package": "node -e \"require('fs').mkdirSync('releases',{recursive:true})\" && vsce package --out releases",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "lint": "eslint src test",
+        "lint:fix": "eslint src test --fix",
+        "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"*.{json,mjs,ts}\"",
+        "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"*.{json,mjs,ts}\"",
+        "test": "vitest run",
+        "test:watch": "vitest"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "@types/node": "^20.0.0",
+        "@types/vscode": "^1.85.0",
+        "@typescript-eslint/eslint-plugin": "^8.57.2",
+        "@typescript-eslint/parser": "^8.57.2",
+        "@vscode/vsce": "^3.0.0",
+        "eslint": "^10.1.0",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-prettier": "^5.5.5",
+        "prettier": "^3.8.1",
+        "typescript": "^5.3.0",
+        "typescript-eslint": "^8.57.2",
+        "vitest": "^4.1.2"
+    },
+    "dependencies": {
+        "fast-xml-parser": "^4.3.0"
     }
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "package": "node -e \"require('fs').mkdirSync('releases',{recursive:true})\" && vsce package --out releases",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "lint": "eslint src --ext ts",
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/vscode": "^1.85.0",
-    "@vscode/vsce": "^3.0.0",
-    "typescript": "^5.3.0",
-    "vitest": "^4.1.2"
-  },
-  "dependencies": {
-    "fast-xml-parser": "^4.3.0"
-  }
 }

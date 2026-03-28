@@ -13,7 +13,7 @@ export interface TestItem {
 export function createMockTestItem(
     id: string,
     label: string,
-    options?: { parent?: TestItem; tags?: TestTag[] }
+    options?: { parent?: TestItem; tags?: TestTag[] },
 ): TestItem {
     return {
         id,

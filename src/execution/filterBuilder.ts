@@ -23,7 +23,7 @@ const TAG_FQN = 'fqn';
 
 export function setTestItemData(
     item: vscode.TestItem,
-    data: { projectPath?: string; nodeType?: string; fqn?: string }
+    data: { projectPath?: string; nodeType?: string; fqn?: string },
 ): void {
     if (!item.tags) {
         item.tags = [];
@@ -103,9 +103,8 @@ export function buildFilter(items: readonly vscode.TestItem[]): FilterResult {
         return { filter: undefined, projectPath };
     }
 
-    const filter = expressions.length === 1
-        ? expressions[0]
-        : expressions.map(e => `(${e})`).join(' | ');
+    const filter =
+        expressions.length === 1 ? expressions[0] : expressions.map((e) => `(${e})`).join(' | ');
 
     return { filter, projectPath };
 }
@@ -114,7 +113,9 @@ function findProjectPath(item: vscode.TestItem): string | undefined {
     let current: vscode.TestItem | undefined = item;
     while (current) {
         const pp = getProjectPath(current);
-        if (pp) { return pp; }
+        if (pp) {
+            return pp;
+        }
         current = current.parent;
     }
     return undefined;

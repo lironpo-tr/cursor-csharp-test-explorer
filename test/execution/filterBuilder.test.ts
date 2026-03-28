@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TestTag, createMockTestItem } from '../__mocks__/vscode';
+import { createMockTestItem } from '../__mocks__/vscode';
 import {
     buildFilter,
     setTestItemData,
@@ -11,7 +11,7 @@ import {
 
 function makeTestItem(
     id: string,
-    opts: { nodeType?: string; fqn?: string; projectPath?: string; parent?: any } = {}
+    opts: { nodeType?: string; fqn?: string; projectPath?: string; parent?: any } = {},
 ) {
     const item = createMockTestItem(id, id, { parent: opts.parent });
     setTestItemData(item as any, {
@@ -141,7 +141,7 @@ describe('buildFilter', () => {
         const result = buildFilter([item1 as any, item2 as any]);
 
         expect(result.filter).toBe(
-            '(FullyQualifiedName=NS.Class.Test1) | (FullyQualifiedName=NS.Class.Test2)'
+            '(FullyQualifiedName=NS.Class.Test1) | (FullyQualifiedName=NS.Class.Test2)',
         );
     });
 
@@ -160,7 +160,7 @@ describe('buildFilter', () => {
         const result = buildFilter([method as any, cls as any]);
 
         expect(result.filter).toBe(
-            '(FullyQualifiedName=NS.ClassA.Test1) | (FullyQualifiedName~NS.ClassB)'
+            '(FullyQualifiedName=NS.ClassA.Test1) | (FullyQualifiedName~NS.ClassB)',
         );
     });
 
@@ -279,7 +279,7 @@ describe('buildFilter', () => {
         const result = buildFilter([case1 as any, method as any]);
 
         expect(result.filter).toBe(
-            '(FullyQualifiedName=NS.Class.Add\\(1, 2\\)) | (FullyQualifiedName=NS.Class.OtherTest)'
+            '(FullyQualifiedName=NS.Class.Add\\(1, 2\\)) | (FullyQualifiedName=NS.Class.OtherTest)',
         );
     });
 });

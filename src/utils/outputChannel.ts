@@ -15,7 +15,9 @@ export function log(message: string): void {
 
 export function logError(message: string, error?: unknown): void {
     const errorMsg = error instanceof Error ? error.message : String(error ?? '');
-    getOutputChannel().appendLine(`[${new Date().toLocaleTimeString()}] ERROR: ${message} ${errorMsg}`);
+    getOutputChannel().appendLine(
+        `[${new Date().toLocaleTimeString()}] ERROR: ${message} ${errorMsg}`,
+    );
 }
 
 export function showOutput(): void {

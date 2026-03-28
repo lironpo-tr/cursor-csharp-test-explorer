@@ -17,13 +17,15 @@ export interface RunResult {
 export async function runTests(
     testRun: vscode.TestRun,
     items: readonly vscode.TestItem[],
-    token: vscode.CancellationToken
+    token: vscode.CancellationToken,
 ): Promise<RunResult | undefined> {
     // Group items by project
     const projectGroups = groupByProject(items);
 
     for (const [projectPath, projectItems] of projectGroups) {
-        if (token.isCancellationRequested) { return undefined; }
+        if (token.isCancellationRequested) {
+            return undefined;
+        }
 
         const result = await runProjectTests(testRun, projectPath, projectItems, token);
         if (result) {
@@ -39,7 +41,7 @@ async function runProjectTests(
     testRun: vscode.TestRun,
     projectPath: string,
     items: vscode.TestItem[],
-    token: vscode.CancellationToken
+    token: vscode.CancellationToken,
 ): Promise<RunResult | undefined> {
     const projectDir = path.dirname(projectPath);
 
@@ -88,8 +90,12 @@ async function runProjectTests(
         } catch {
             logError('TRX file not found or unreadable, falling back to exit code');
             trxSummary = {
-                total: 0, passed: 0, failed: 0, skipped: 0,
-                duration: 0, results: [],
+                total: 0,
+                passed: 0,
+                failed: 0,
+                skipped: 0,
+                duration: 0,
+                results: [],
             };
 
             if (result.exitCode !== 0) {
@@ -116,7 +122,7 @@ async function runProjectTests(
 function applyResults(
     testRun: vscode.TestRun,
     items: vscode.TestItem[],
-    summary: TrxSummary
+    summary: TrxSummary,
 ): void {
     // Build a map from test name -> result for quick lookup
     const resultMap = new Map<string, TestResult>();
@@ -128,13 +134,15 @@ function applyResults(
         applyResultToItem(testRun, item, resultMap);
     }
 
-    log(`Run complete: ${summary.passed} passed, ${summary.failed} failed, ${summary.skipped} skipped (${summary.duration}ms)`);
+    log(
+        `Run complete: ${summary.passed} passed, ${summary.failed} failed, ${summary.skipped} skipped (${summary.duration}ms)`,
+    );
 }
 
 function applyResultToItem(
     testRun: vscode.TestRun,
     item: vscode.TestItem,
-    resultMap: Map<string, TestResult>
+    resultMap: Map<string, TestResult>,
 ): void {
     // Check if this item has a direct result
     const result = resultMap.get(item.id) ?? resultMap.get(item.label);
@@ -159,7 +167,7 @@ function applyResultToItem(
     }
 
     // Recurse into children
-    item.children.forEach(child => {
+    item.children.forEach((child) => {
         applyResultToItem(testRun, child, resultMap);
     });
 }
@@ -169,7 +177,9 @@ function groupByProject(items: readonly vscode.TestItem[]): Map<string, vscode.T
 
     for (const item of items) {
         const pp = findProjectPath(item);
-        if (!pp) { continue; }
+        if (!pp) {
+            continue;
+        }
 
         let list = groups.get(pp);
         if (!list) {
@@ -186,7 +196,9 @@ function findProjectPath(item: vscode.TestItem): string | undefined {
     let current: vscode.TestItem | undefined = item;
     while (current) {
         const pp = getProjectPath(current);
-        if (pp) { return pp; }
+        if (pp) {
+            return pp;
+        }
         current = current.parent;
     }
     return undefined;
@@ -194,7 +206,7 @@ function findProjectPath(item: vscode.TestItem): string | undefined {
 
 function markStarted(testRun: vscode.TestRun, item: vscode.TestItem): void {
     testRun.started(item);
-    item.children.forEach(child => markStarted(testRun, child));
+    item.children.forEach((child) => markStarted(testRun, child));
 }
 
 function markFailed(

@@ -10,9 +10,11 @@ const PID_REGEX = /Process Id:\s*(\d+)/;
 export async function debugTests(
     testRun: vscode.TestRun,
     items: readonly vscode.TestItem[],
-    token: vscode.CancellationToken
+    token: vscode.CancellationToken,
 ): Promise<void> {
-    if (items.length === 0) { return; }
+    if (items.length === 0) {
+        return;
+    }
 
     const firstItem = items[0];
     const projectPath = findProjectPath(firstItem);
@@ -60,7 +62,9 @@ export async function debugTests(
         const started = await vscode.debug.startDebugging(workspaceFolder, debugConfig);
 
         if (!started) {
-            logError('Failed to attach debugger. Make sure the C# extension (or OmniSharp) is installed.');
+            logError(
+                'Failed to attach debugger. Make sure the C# extension (or OmniSharp) is installed.',
+            );
             proc.kill();
             return;
         }
@@ -113,7 +117,9 @@ function waitForPid(proc: ChildProcess, token: vscode.CancellationToken): Promis
 
         // Timeout after 60 seconds
         setTimeout(() => {
-            reject(new Error('Timed out waiting for test host PID. Is VSTEST_HOST_DEBUG supported?'));
+            reject(
+                new Error('Timed out waiting for test host PID. Is VSTEST_HOST_DEBUG supported?'),
+            );
         }, 60_000);
     });
 }
@@ -122,7 +128,9 @@ function findProjectPath(item: vscode.TestItem): string | undefined {
     let current: vscode.TestItem | undefined = item;
     while (current) {
         const pp = getProjectPath(current);
-        if (pp) { return pp; }
+        if (pp) {
+            return pp;
+        }
         current = current.parent;
     }
     return undefined;

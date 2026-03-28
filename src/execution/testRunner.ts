@@ -15,7 +15,7 @@ export function buildFilterForNode(node: TestTreeNode): string | undefined {
         case 'parameterizedCase':
             return `FullyQualifiedName=${node.fqn}`;
         case 'method':
-            return `FullyQualifiedName~${node.fqn.split('.').pop()}`;
+            return `FullyQualifiedName~${node.fqn}`;
         case 'class':
             return `FullyQualifiedName~${node.fqn}`;
         case 'namespace':
@@ -63,7 +63,29 @@ export async function executeTests(
     treeProvider: TestTreeProvider,
     logger: Logger,
 ): Promise<void> {
-    if (!node.projectPath || token.isCancellationRequested) {
+    if (token.isCancellationRequested) {
+        return;
+    }
+
+    if (!node.projectPath) {
+        const msg = `No project path associated with "${node.label}". Re-discover tests and try again.`;
+        logger.logError(msg);
+        markRunningNodesAsFailed(node, new Error(msg), treeProvider);
+        return;
+    }
+
+    let projectExists = false;
+    try {
+        await fs.access(node.projectPath);
+        projectExists = true;
+    } catch {
+        // file does not exist or is inaccessible
+    }
+
+    if (!projectExists) {
+        const msg = `Project file not found: ${node.projectPath}. Re-discover tests to refresh the project list.`;
+        logger.logError(msg);
+        markRunningNodesAsFailed(node, new Error(msg), treeProvider);
         return;
     }
 

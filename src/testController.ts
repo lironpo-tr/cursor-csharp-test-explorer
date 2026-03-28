@@ -103,7 +103,10 @@ export class CSharpTestController implements vscode.Disposable {
 
     async runNode(node: TestTreeNode): Promise<void> {
         if (!node.projectPath) {
-            this.logger.logError('No project path for node');
+            this.logger.logError(`No project path for "${node.label}". Try re-discovering tests.`);
+            vscode.window.showErrorMessage(
+                `Cannot run "${node.label}": no project path found. Try refreshing the test list.`,
+            );
             return;
         }
 
@@ -159,7 +162,10 @@ export class CSharpTestController implements vscode.Disposable {
 
     async debugNode(node: TestTreeNode): Promise<void> {
         if (!node.projectPath) {
-            this.logger.logError('No project path for node');
+            this.logger.logError(`No project path for "${node.label}". Try re-discovering tests.`);
+            vscode.window.showErrorMessage(
+                `Cannot debug "${node.label}": no project path found. Try refreshing the test list.`,
+            );
             return;
         }
 

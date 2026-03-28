@@ -43,12 +43,31 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
 
     private roots: TestTreeNode[] = [];
     private allNodes = new Map<string, TestTreeNode>();
+    private filterQuery = '';
+
+    get activeFilter(): string {
+        return this.filterQuery;
+    }
+
+    setFilter(query: string): void {
+        this.filterQuery = query.toLowerCase();
+        this._onDidChangeTreeData.fire();
+    }
+
+    clearFilter(): void {
+        this.filterQuery = '';
+        this._onDidChangeTreeData.fire();
+    }
 
     getTreeItem(element: TestTreeNode): vscode.TreeItem {
-        const collapsible =
-            element.children.length > 0
-                ? vscode.TreeItemCollapsibleState.Collapsed
-                : vscode.TreeItemCollapsibleState.None;
+        const hasVisibleChildren = this.filterQuery
+            ? element.children.some((c) => this.subtreeMatchesFilter(c))
+            : element.children.length > 0;
+        const collapsible = hasVisibleChildren
+            ? this.filterQuery
+                ? vscode.TreeItemCollapsibleState.Expanded
+                : vscode.TreeItemCollapsibleState.Collapsed
+            : vscode.TreeItemCollapsibleState.None;
 
         const item = new vscode.TreeItem(element.label, collapsible);
         item.id = element.id;
@@ -88,10 +107,11 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
     }
 
     getChildren(element?: TestTreeNode): TestTreeNode[] {
-        if (!element) {
-            return this.roots;
+        const children = element ? [...element.children] : this.roots;
+        if (!this.filterQuery) {
+            return children;
         }
-        return [...element.children];
+        return children.filter((child) => this.subtreeMatchesFilter(child));
     }
 
     getParent(element: TestTreeNode): TestTreeNode | undefined {
@@ -332,6 +352,16 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
 
     getNodeById(id: string): TestTreeNode | undefined {
         return this.allNodes.get(id);
+    }
+
+    private subtreeMatchesFilter(node: TestTreeNode): boolean {
+        if (node.fqn.toLowerCase().includes(this.filterQuery)) {
+            return true;
+        }
+        if (node.label.toLowerCase().includes(this.filterQuery)) {
+            return true;
+        }
+        return node.children.some((child) => this.subtreeMatchesFilter(child));
     }
 
     private propagateStateUp(node: TestTreeNode): void {

@@ -150,11 +150,22 @@ export class CSharpTestController implements vscode.Disposable {
         try {
             for (const root of this.treeProvider.getRoots()) {
                 if (this.activeCts?.token.isCancellationRequested) { break; }
-                await this.executeTests(root, this.activeCts!.token);
-            }
-        } catch (err) {
-            if (!this.isCancelError(err)) {
-                logError('Run all failed', err);
+
+                try {
+                    await this.executeTests(root, this.activeCts!.token);
+                } catch (err) {
+                    if (this.isCancelError(err)) { break; }
+
+                    logError(`Run failed for project: ${root.label}`, err);
+                    const methodNodes = this.collectMethodNodes(root);
+                    for (const m of methodNodes) {
+                        if (m.state === 'running') {
+                            this.applyState(m, 'failed', {
+                                errorMessage: err instanceof Error ? err.message : String(err),
+                            });
+                        }
+                    }
+                }
             }
         } finally {
             this.finishRun();
@@ -295,7 +306,24 @@ export class CSharpTestController implements vscode.Disposable {
             args.push(...extraArgs);
         }
 
-        const result = await runDotnet(args, projectDir, token);
+        let result: Awaited<ReturnType<typeof runDotnet>>;
+        try {
+            result = await runDotnet(args, projectDir, token);
+        } catch (err) {
+            if (this.isCancelError(err)) { throw err; }
+
+            logError(`dotnet test failed to execute for ${node.label}`, err);
+            const methodNodes = this.collectMethodNodes(node);
+            for (const m of methodNodes) {
+                if (m.state === 'running') {
+                    this.applyState(m, 'failed', {
+                        errorMessage: err instanceof Error ? err.message : String(err),
+                    });
+                }
+            }
+            fs.rm(trxDir, { recursive: true }).catch(() => {});
+            return;
+        }
 
         if (token.isCancellationRequested) { return; }
 

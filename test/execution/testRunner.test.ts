@@ -8,6 +8,7 @@ import {
     buildFilterForNodes,
     collectAllMethodNodes,
     groupNodesByProject,
+    markSubtreeRunning,
 } from '../../src/execution/testRunner';
 import { TestTreeNode } from '../../src/ui/testTreeProvider';
 
@@ -344,6 +345,69 @@ describe('multi-select pipeline', () => {
             '(FullyQualifiedName~NS.A.Test1) | (FullyQualifiedName=NS.B.Add(1,2)) | (FullyQualifiedName=NS.B.Add(3,4))',
         );
         expect(methodNodes).toHaveLength(3);
+    });
+});
+
+describe('markSubtreeRunning', () => {
+    it('should mark a single leaf node as running', () => {
+        const method = makeNode('method', 'NS.A.Test1');
+
+        markSubtreeRunning(method);
+
+        expect(method.state).toBe('running');
+    });
+
+    it('should mark a parent and all its descendants as running', () => {
+        const method1 = makeNode('method', 'NS.A.Test1');
+        const method2 = makeNode('method', 'NS.A.Test2');
+        const classNode = makeNode('class', 'NS.A');
+        classNode.addChild(method1);
+        classNode.addChild(method2);
+
+        markSubtreeRunning(classNode);
+
+        expect(classNode.state).toBe('running');
+        expect(method1.state).toBe('running');
+        expect(method2.state).toBe('running');
+    });
+
+    it('should mark deeply nested nodes as running', () => {
+        const case1 = makeNode('parameterizedCase', 'NS.A.Add(1,2)');
+        const case2 = makeNode('parameterizedCase', 'NS.A.Add(3,4)');
+        const methodNode = makeNode('method', 'NS.A.Add');
+        methodNode.addChild(case1);
+        methodNode.addChild(case2);
+        const classNode = makeNode('class', 'NS.A');
+        classNode.addChild(methodNode);
+        const nsNode = makeNode('namespace', 'NS');
+        nsNode.addChild(classNode);
+        const projectNode = makeNode('project', 'Proj');
+        projectNode.addChild(nsNode);
+
+        markSubtreeRunning(projectNode);
+
+        expect(projectNode.state).toBe('running');
+        expect(nsNode.state).toBe('running');
+        expect(classNode.state).toBe('running');
+        expect(methodNode.state).toBe('running');
+        expect(case1.state).toBe('running');
+        expect(case2.state).toBe('running');
+    });
+
+    it('should not affect sibling subtrees when called on a specific child', () => {
+        const method1 = makeNode('method', 'NS.A.Test1');
+        const method2 = makeNode('method', 'NS.B.Test2');
+        const class1 = makeNode('class', 'NS.A');
+        const class2 = makeNode('class', 'NS.B');
+        class1.addChild(method1);
+        class2.addChild(method2);
+
+        markSubtreeRunning(class1);
+
+        expect(class1.state).toBe('running');
+        expect(method1.state).toBe('running');
+        expect(class2.state).toBe('none');
+        expect(method2.state).toBe('none');
     });
 });
 

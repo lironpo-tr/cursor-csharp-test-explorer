@@ -1,4 +1,5 @@
 import * as fs from 'fs/promises';
+import { XMLParser } from 'fast-xml-parser';
 
 // ── Parsed TRX XML interfaces ──
 // These mirror the structure returned by fast-xml-parser when parsing
@@ -85,8 +86,6 @@ export async function parseTrxFile(trxPath: string): Promise<TrxSummary> {
 }
 
 export function parseTrxXml(xml: string): TrxSummary {
-    // Lazy-load to avoid crashing activation if the package is missing
-    const { XMLParser } = require('fast-xml-parser');
     const parser = new XMLParser({
         ignoreAttributes: false,
         attributeNamePrefix: '@_',

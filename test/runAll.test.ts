@@ -89,6 +89,10 @@ vi.mock('../src/execution/trxParser', () => ({
 vi.mock('fs/promises', () => ({
     mkdir: vi.fn().mockResolvedValue(undefined),
     rm: vi.fn().mockResolvedValue(undefined),
+    access: vi.fn().mockResolvedValue(undefined),
+    readdir: vi.fn().mockResolvedValue([
+        { name: 'results.trx', isFile: () => true, isDirectory: () => false },
+    ]),
 }));
 
 import { CSharpTestController } from '../src/testController';

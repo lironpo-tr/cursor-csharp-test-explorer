@@ -97,7 +97,7 @@ import type { DiscoveredTest } from '../src/discovery/dotnetDiscoverer';
 import type { Logger } from '../src/utils/logger';
 
 function createMockLogger(): Logger {
-    return { log: vi.fn(), logError: vi.fn(), showOutput: vi.fn() };
+    return { log: vi.fn(), logError: vi.fn(), logTrace: vi.fn(), showOutput: vi.fn() };
 }
 
 function createFakeContext() {

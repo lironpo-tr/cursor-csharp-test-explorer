@@ -6,8 +6,7 @@ import { StatusBarManager } from './ui/statusBarManager';
 import {
     executeTests,
     executeTestsForNodes,
-    collectMethodNodes,
-    collectAllMethodNodes,
+    markSubtreeRunning,
     markRunningNodesAsFailed,
 } from './execution/testRunner';
 import { launchDebugSession } from './debug/debugLauncher';
@@ -128,10 +127,7 @@ export class CSharpTestController implements vscode.Disposable {
         }
 
         this.startRun();
-        const methodNodes = collectMethodNodes(node);
-        for (const m of methodNodes) {
-            m.state = 'running';
-        }
+        markSubtreeRunning(node);
         this.treeProvider.refresh();
 
         try {
@@ -148,9 +144,8 @@ export class CSharpTestController implements vscode.Disposable {
 
     async runAll(): Promise<void> {
         this.startRun();
-        const allMethods = this.treeProvider.getAllMethodNodes();
-        for (const m of allMethods) {
-            m.state = 'running';
+        for (const root of this.treeProvider.getRoots()) {
+            markSubtreeRunning(root);
         }
         this.treeProvider.refresh();
 
@@ -187,9 +182,8 @@ export class CSharpTestController implements vscode.Disposable {
         }
 
         this.startRun();
-        const methodNodes = collectAllMethodNodes(validNodes);
-        for (const m of methodNodes) {
-            m.state = 'running';
+        for (const node of validNodes) {
+            markSubtreeRunning(node);
         }
         this.treeProvider.refresh();
 

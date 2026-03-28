@@ -27,6 +27,13 @@ export function buildFilterForNode(node: TestTreeNode): string | undefined {
     }
 }
 
+export function markSubtreeRunning(node: TestTreeNode): void {
+    node.state = 'running';
+    for (const child of node.children) {
+        markSubtreeRunning(child);
+    }
+}
+
 export function collectMethodNodes(node: TestTreeNode): TestTreeNode[] {
     if (node.nodeType === 'parameterizedCase') {
         return [node];

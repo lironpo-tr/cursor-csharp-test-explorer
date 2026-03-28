@@ -1,30 +1,61 @@
 import * as vscode from 'vscode';
+import { Logger } from './logger';
 
-let channel: vscode.OutputChannel | undefined;
+export class OutputChannelLogger implements Logger {
+    private readonly channel: vscode.OutputChannel;
 
-export function getOutputChannel(): vscode.OutputChannel {
-    if (!channel) {
-        channel = vscode.window.createOutputChannel('C# Test Explorer');
+    constructor(channel: vscode.OutputChannel) {
+        this.channel = channel;
     }
-    return channel;
+
+    log(message: string): void {
+        this.channel.appendLine(`[${new Date().toLocaleTimeString()}] ${message}`);
+    }
+
+    logError(message: string, error?: unknown): void {
+        const errorMsg = error instanceof Error ? error.message : String(error ?? '');
+        this.channel.appendLine(
+            `[${new Date().toLocaleTimeString()}] ERROR: ${message} ${errorMsg}`,
+        );
+    }
+
+    showOutput(): void {
+        this.channel.show(true);
+    }
+
+    dispose(): void {
+        this.channel.dispose();
+    }
+}
+
+let defaultLogger: OutputChannelLogger | undefined;
+
+function getDefaultLogger(): OutputChannelLogger {
+    if (!defaultLogger) {
+        const channel = vscode.window.createOutputChannel('C# Test Explorer');
+        defaultLogger = new OutputChannelLogger(channel);
+    }
+    return defaultLogger;
+}
+
+export function createLogger(): OutputChannelLogger {
+    const channel = vscode.window.createOutputChannel('C# Test Explorer');
+    return new OutputChannelLogger(channel);
 }
 
 export function log(message: string): void {
-    getOutputChannel().appendLine(`[${new Date().toLocaleTimeString()}] ${message}`);
+    getDefaultLogger().log(message);
 }
 
 export function logError(message: string, error?: unknown): void {
-    const errorMsg = error instanceof Error ? error.message : String(error ?? '');
-    getOutputChannel().appendLine(
-        `[${new Date().toLocaleTimeString()}] ERROR: ${message} ${errorMsg}`,
-    );
+    getDefaultLogger().logError(message, error);
 }
 
 export function showOutput(): void {
-    getOutputChannel().show(true);
+    getDefaultLogger().showOutput();
 }
 
 export function disposeChannel(): void {
-    channel?.dispose();
-    channel = undefined;
+    defaultLogger?.dispose();
+    defaultLogger = undefined;
 }

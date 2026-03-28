@@ -35,7 +35,8 @@ src/
 │   ├── testTreeProvider.ts   # TreeDataProvider for the sidebar test tree view
 │   └── statusBarManager.ts   # Status bar indicator for test runs
 └── utils/
-    ├── outputChannel.ts      # Logging via VS Code OutputChannel
+    ├── logger.ts             # Logger interface for injectable logging abstraction
+    ├── outputChannel.ts      # OutputChannelLogger implementation + convenience wrappers
     ├── dotnetCli.ts          # Wrapper for spawning dotnet CLI processes
     └── testItemUtils.ts      # Shared helpers for TestItem tag storage and parent-chain lookups
 ```

@@ -86,12 +86,6 @@ vi.mock('../src/execution/trxParser', () => ({
     parseTrxFile: (...args: unknown[]) => mockParseTrxFile(...args),
 }));
 
-vi.mock('../src/utils/outputChannel', () => ({
-    log: vi.fn(),
-    logError: vi.fn(),
-    showOutput: vi.fn(),
-}));
-
 vi.mock('fs/promises', () => ({
     mkdir: vi.fn().mockResolvedValue(undefined),
     rm: vi.fn().mockResolvedValue(undefined),
@@ -100,6 +94,11 @@ vi.mock('fs/promises', () => ({
 import { CSharpTestController } from '../src/testController';
 import type { TestProject } from '../src/discovery/projectDetector';
 import type { DiscoveredTest } from '../src/discovery/dotnetDiscoverer';
+import type { Logger } from '../src/utils/logger';
+
+function createMockLogger(): Logger {
+    return { log: vi.fn(), logError: vi.fn(), showOutput: vi.fn() };
+}
 
 function createFakeContext() {
     return { subscriptions: [] } as any;
@@ -109,7 +108,7 @@ function buildControllerWithProjects(
     projects: TestProject[],
     testsByProject: Map<string, DiscoveredTest[]>,
 ): CSharpTestController {
-    const controller = new CSharpTestController(createFakeContext());
+    const controller = new CSharpTestController(createFakeContext(), createMockLogger());
     controller.treeProvider.buildTree(projects, testsByProject);
     return controller;
 }

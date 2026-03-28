@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs/promises';
-import { log, logError } from '../utils/outputChannel';
+import { Logger } from '../utils/logger';
 
 const TEST_FRAMEWORK_PACKAGES = [
     'nunit',
@@ -21,7 +21,7 @@ export interface TestProject {
     frameworks: string[];
 }
 
-export async function detectTestProjects(): Promise<TestProject[]> {
+export async function detectTestProjects(logger: Logger): Promise<TestProject[]> {
     const excludePatterns = vscode.workspace
         .getConfiguration('csharpTestExplorer')
         .get<string[]>('excludeProjects', []);
@@ -53,11 +53,11 @@ export async function detectTestProjects(): Promise<TestProject[]> {
                 });
             }
         } catch (err) {
-            logError(`Failed to read ${filePath}`, err);
+            logger.logError(`Failed to read ${filePath}`, err);
         }
     }
 
-    log(
+    logger.log(
         `Detected ${projects.length} test project(s): ${projects.map((p) => p.projectName).join(', ')}`,
     );
     return projects;

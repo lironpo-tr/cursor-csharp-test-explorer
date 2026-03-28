@@ -3,7 +3,7 @@ import * as path from 'path';
 import { ChildProcess } from 'child_process';
 import { TestTreeNode } from '../ui/testTreeProvider';
 import { getExtraArgs } from '../utils/dotnetCli';
-import { log, logError, showOutput } from '../utils/outputChannel';
+import { Logger } from '../utils/logger';
 import { buildFilterForNode } from '../execution/testRunner';
 
 const PID_REGEX = /Process Id:\s*(\d+)/;
@@ -11,9 +11,10 @@ const PID_REGEX = /Process Id:\s*(\d+)/;
 export async function launchDebugSession(
     node: TestTreeNode,
     token: vscode.CancellationToken,
+    logger: Logger,
 ): Promise<void> {
     if (!node.projectPath) {
-        logError('No project path for node');
+        logger.logError('No project path for node');
         return;
     }
 
@@ -30,16 +31,16 @@ export async function launchDebugSession(
         args.push(...extraArgs);
     }
 
-    log('Starting test host with VSTEST_HOST_DEBUG=1...');
-    showOutput();
+    logger.log('Starting test host with VSTEST_HOST_DEBUG=1...');
+    logger.showOutput();
 
     const { spawnDotnet } = await import('../utils/dotnetCli');
-    const proc = spawnDotnet(args, projectDir, { VSTEST_HOST_DEBUG: '1' });
+    const proc = spawnDotnet(args, projectDir, logger, { VSTEST_HOST_DEBUG: '1' });
 
     try {
         const pid = await waitForPid(proc, token);
 
-        log(`Test host PID: ${pid}. Attaching debugger...`);
+        logger.log(`Test host PID: ${pid}. Attaching debugger...`);
 
         const debugConfig: vscode.DebugConfiguration = {
             type: 'coreclr',
@@ -52,7 +53,7 @@ export async function launchDebugSession(
         const started = await vscode.debug.startDebugging(folder, debugConfig);
 
         if (!started) {
-            logError('Failed to attach debugger');
+            logger.logError('Failed to attach debugger');
             proc.kill();
             return;
         }
@@ -65,11 +66,11 @@ export async function launchDebugSession(
             });
         });
 
-        log('Debug session completed.');
+        logger.log('Debug session completed.');
     } catch (err) {
         proc.kill();
         if (!(err instanceof Error && err.message === 'Cancelled')) {
-            logError('Debug failed', err);
+            logger.logError('Debug failed', err);
         }
     }
 }

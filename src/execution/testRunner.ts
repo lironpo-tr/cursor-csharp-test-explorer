@@ -96,7 +96,9 @@ export async function executeTests(
 
         logger.logError(`dotnet test failed to execute for ${node.label}`, err);
         markRunningNodesAsFailed(node, err, treeProvider);
-        fs.rm(trxDir, { recursive: true }).catch(() => {});
+        fs.rm(trxDir, { recursive: true }).catch((cleanupErr) => {
+            logger.logTrace(`Failed to clean up TRX directory ${trxDir}: ${cleanupErr}`);
+        });
         return;
     }
 
@@ -110,8 +112,8 @@ export async function executeTests(
     try {
         const summary = await parseTrxFile(trxPath);
         matchAndApplyResults(summary, methodNodes, treeProvider, logger);
-    } catch {
-        logger.logError('Could not read TRX results, check output for raw dotnet test output');
+    } catch (err) {
+        logger.logError('Could not read TRX results, check output for raw dotnet test output', err);
         if (result.stdout) {
             logger.log(result.stdout);
         }
@@ -133,7 +135,9 @@ export async function executeTests(
         }
     }
 
-    fs.rm(trxDir, { recursive: true }).catch(() => {});
+    fs.rm(trxDir, { recursive: true }).catch((cleanupErr) => {
+        logger.logTrace(`Failed to clean up TRX directory ${trxDir}: ${cleanupErr}`);
+    });
 }
 
 function isCancelError(err: unknown): boolean {

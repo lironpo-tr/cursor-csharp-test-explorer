@@ -19,6 +19,10 @@ export class OutputChannelLogger implements Logger {
         );
     }
 
+    logTrace(message: string): void {
+        this.channel.appendLine(`[${new Date().toLocaleTimeString()}] TRACE: ${message}`);
+    }
+
     showOutput(): void {
         this.channel.show(true);
     }

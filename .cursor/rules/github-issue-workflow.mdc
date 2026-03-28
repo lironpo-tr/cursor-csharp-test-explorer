@@ -65,6 +65,9 @@ Follow the [Conventional Commits](https://www.conventionalcommits.org/) spec:
 
 ## 3. Pull Request
 
-- Reference the issue using a closing keyword: `Closes #<issue-number>`.
+When done working on an issue, **automatically create a pull request** — do not wait for the user to ask.
+
+- Push the branch and create a PR to `main` using `gh pr create`.
 - PR title should follow Conventional Commits format.
+- Reference the issue using a closing keyword: `Closes #<issue-number>`.
 - Include a summary and test plan in the PR body.

@@ -49,6 +49,8 @@ vi.mock('vscode', () => {
 import { TestTreeProvider, TestTreeNode } from '../../src/ui/testTreeProvider';
 import { applyResultState, matchAndApplyResults } from '../../src/execution/resultMatcher';
 import type { TrxSummary } from '../../src/execution/trxParser';
+import type { DiscoveredTest } from '../../src/discovery/dotnetDiscoverer';
+import type { TestProject } from '../../src/discovery/projectDetector';
 import type { Logger } from '../../src/utils/logger';
 
 function createMockLogger(): Logger {
@@ -313,5 +315,198 @@ describe('matchAndApplyResults', () => {
         };
 
         expect(() => matchAndApplyResults(summary, [], treeProvider, mockLogger)).not.toThrow();
+    });
+});
+
+function makeProject(name: string, csprojPath: string): TestProject {
+    return {
+        projectName: name,
+        csprojPath,
+        projectDir: csprojPath.replace(/[/\\][^/\\]+$/, ''),
+    } as TestProject;
+}
+
+function makeTest(
+    ns: string,
+    cls: string,
+    method: string,
+    overrides: Partial<DiscoveredTest> = {},
+): DiscoveredTest {
+    return {
+        fullyQualifiedName: `${ns}.${cls}.${method}`,
+        namespace: ns,
+        className: cls,
+        methodName: method,
+        displayName: method,
+        sourceFile: `${cls}.cs`,
+        ...overrides,
+    } as DiscoveredTest;
+}
+
+function buildTreeWithTests(tests: DiscoveredTest[]): TestTreeProvider {
+    const provider = new TestTreeProvider();
+    const project = makeProject('TestProj', '/repo/TestProj/TestProj.csproj');
+    const testsByProject = new Map<string, DiscoveredTest[]>();
+    testsByProject.set(project.csprojPath, tests);
+    provider.buildTree([project], testsByProject);
+    return provider;
+}
+
+describe('matchAndApplyResults — TestCaseSource (dynamic cases)', () => {
+    let mockLogger: Logger;
+
+    beforeEach(() => {
+        mockLogger = createMockLogger();
+        vi.clearAllMocks();
+    });
+
+    it('should create dynamic case nodes when TRX uses FQN with params', () => {
+        const provider = buildTreeWithTests([
+            makeTest('NS', 'Cls', 'Add'),
+        ]);
+        const methodNodes = provider.getAllMethodNodes();
+        const summary: TrxSummary = {
+            total: 2,
+            passed: 2,
+            failed: 0,
+            skipped: 0,
+            duration: 100,
+            results: [
+                { testName: 'NS.Cls.Add(1,2,3)', outcome: 'Passed', duration: 50 },
+                { testName: 'NS.Cls.Add(4,5,9)', outcome: 'Passed', duration: 50 },
+            ],
+        };
+
+        matchAndApplyResults(summary, methodNodes, provider, mockLogger);
+
+        const methodNode = provider.getNodeByFqn('NS.Cls.Add');
+        expect(methodNode).toBeDefined();
+        expect(methodNode!.children).toHaveLength(2);
+        expect(methodNode!.children[0].nodeType).toBe('parameterizedCase');
+        expect(methodNode!.children[1].nodeType).toBe('parameterizedCase');
+        expect(methodNode!.children[0].state).toBe('passed');
+        expect(methodNode!.children[1].state).toBe('passed');
+    });
+
+    it('should create dynamic case nodes when TRX uses short names (no namespace)', () => {
+        const provider = buildTreeWithTests([
+            makeTest('MyNamespace', 'MyClass', 'Calculate'),
+        ]);
+        const methodNodes = provider.getAllMethodNodes();
+        const summary: TrxSummary = {
+            total: 2,
+            passed: 1,
+            failed: 1,
+            skipped: 0,
+            duration: 200,
+            results: [
+                { testName: 'Calculate(10,20,30)', outcome: 'Passed', duration: 100 },
+                { testName: 'Calculate(1,1,3)', outcome: 'Failed', errorMessage: 'Expected 3 but got 2', duration: 100 },
+            ],
+        };
+
+        matchAndApplyResults(summary, methodNodes, provider, mockLogger);
+
+        const methodNode = provider.getNodeByFqn('MyNamespace.MyClass.Calculate');
+        expect(methodNode).toBeDefined();
+        expect(methodNode!.children).toHaveLength(2);
+        expect(methodNode!.children[0].state).toBe('passed');
+        expect(methodNode!.children[1].state).toBe('failed');
+        expect(methodNode!.children[1].errorMessage).toBe('Expected 3 but got 2');
+    });
+
+    it('should propagate failed state to parent when any child fails', () => {
+        const provider = buildTreeWithTests([
+            makeTest('NS', 'Cls', 'Multiply'),
+        ]);
+        const methodNodes = provider.getAllMethodNodes();
+        const summary: TrxSummary = {
+            total: 3,
+            passed: 2,
+            failed: 1,
+            skipped: 0,
+            duration: 150,
+            results: [
+                { testName: 'NS.Cls.Multiply(2,3,6)', outcome: 'Passed', duration: 50 },
+                { testName: 'NS.Cls.Multiply(0,5,0)', outcome: 'Passed', duration: 50 },
+                { testName: 'NS.Cls.Multiply(-1,3,-4)', outcome: 'Failed', duration: 50 },
+            ],
+        };
+
+        matchAndApplyResults(summary, methodNodes, provider, mockLogger);
+
+        const methodNode = provider.getNodeByFqn('NS.Cls.Multiply');
+        expect(methodNode).toBeDefined();
+        expect(methodNode!.children).toHaveLength(3);
+        expect(methodNode!.state).toBe('failed');
+    });
+
+    it('should set display name correctly for dynamic case nodes', () => {
+        const provider = buildTreeWithTests([
+            makeTest('NS', 'Cls', 'Format'),
+        ]);
+        const methodNodes = provider.getAllMethodNodes();
+        const summary: TrxSummary = {
+            total: 1,
+            passed: 1,
+            failed: 0,
+            skipped: 0,
+            duration: 50,
+            results: [
+                { testName: 'NS.Cls.Format("hello","world")', outcome: 'Passed', duration: 50 },
+            ],
+        };
+
+        matchAndApplyResults(summary, methodNodes, provider, mockLogger);
+
+        const methodNode = provider.getNodeByFqn('NS.Cls.Format');
+        expect(methodNode!.children).toHaveLength(1);
+        expect(methodNode!.children[0].label).toBe('Format("hello","world")');
+    });
+
+    it('should construct correct FQN for dynamic case nodes from short TRX names', () => {
+        const provider = buildTreeWithTests([
+            makeTest('App.Tests', 'MathTests', 'Add'),
+        ]);
+        const methodNodes = provider.getAllMethodNodes();
+        const summary: TrxSummary = {
+            total: 1,
+            passed: 1,
+            failed: 0,
+            skipped: 0,
+            duration: 50,
+            results: [
+                { testName: 'Add(1,2,3)', outcome: 'Passed', duration: 50 },
+            ],
+        };
+
+        matchAndApplyResults(summary, methodNodes, provider, mockLogger);
+
+        const methodNode = provider.getNodeByFqn('App.Tests.MathTests.Add');
+        expect(methodNode!.children).toHaveLength(1);
+        expect(methodNode!.children[0].fqn).toBe('App.Tests.MathTests.Add(1,2,3)');
+    });
+
+    it('should not log unmatched for TestCaseSource results with short names', () => {
+        const provider = buildTreeWithTests([
+            makeTest('NS', 'Cls', 'Divide'),
+        ]);
+        const methodNodes = provider.getAllMethodNodes();
+        const summary: TrxSummary = {
+            total: 1,
+            passed: 1,
+            failed: 0,
+            skipped: 0,
+            duration: 50,
+            results: [
+                { testName: 'Divide(10,2,5)', outcome: 'Passed', duration: 50 },
+            ],
+        };
+
+        matchAndApplyResults(summary, methodNodes, provider, mockLogger);
+
+        expect(mockLogger.log).not.toHaveBeenCalledWith(
+            expect.stringContaining('Unmatched result'),
+        );
     });
 });

@@ -1,22 +1,31 @@
 # C# Test Explorer for Cursor
 
-A VS Code / Cursor extension that discovers, runs, and debugs C# tests from a dedicated sidebar. Supports **NUnit**, **xUnit**, and **MSTest** — any framework compatible with `dotnet test`.
+Discover, run, and debug C# tests directly from a dedicated sidebar. Supports **NUnit**, **xUnit**, and **MSTest** — any framework compatible with `dotnet test`.
 
 ## Features
 
-- **Test Discovery** — Scans `.csproj` files for test framework references, then parses `.cs` source files for test attributes to build a sidebar tree (Project → Namespace → Class → Method)
+- **Test Discovery** — Automatically scans your workspace for test projects and builds a hierarchical tree view (Project → Namespace → Class → Method)
 - **Run Tests** — Run all tests, a single project, a namespace, a class, or an individual test method
-- **Pass / Fail Icons** — Green check, red X, and skip indicators in the tree and gutter
+- **Multi-Select** — Select multiple nodes in the tree and run them together
+- **Pass / Fail Icons** — Green check, red X, and skip indicators in the tree
 - **Error Details** — Failed tests show error messages and stack traces inline
 - **Source Navigation** — Click a test to jump to its source file and line
-- **Debug Tests** — Launch `dotnet test` with `VSTEST_HOST_DEBUG=1`, then attach the `coreclr` debugger to the test host process
-- **Auto-Refresh** — Re-discovers tests when `.cs` or `.csproj` files change (3-second debounce)
-- **Filter** — Use the sidebar filter bar to search tests by name
+- **Debug Tests** — Debug any test node with the `coreclr` debugger attached
+- **Auto-Refresh** — Re-discovers tests when `.cs` or `.csproj` files change
+- **Filter** — Search tests by name with the sidebar filter bar
 - **Stop Run** — Cancel an in-progress test run from the view toolbar
+
+## Getting Started
+
+1. Open a workspace that contains one or more C# test projects
+2. The extension activates automatically when it detects `.csproj` files
+3. Open the **C# Tests** sidebar (beaker icon in the Activity Bar)
+4. Click **Refresh Tests** to discover your tests
+5. Run or debug tests using the inline buttons or the right-click context menu
 
 ## Test Status Icons
 
-Each test node in the sidebar displays an icon that reflects its current state:
+Each test node in the sidebar displays an icon reflecting its current state:
 
 | Icon | Meaning |
 |------|---------|
@@ -70,36 +79,13 @@ All commands are available from the **C# Tests** sidebar and the Command Palette
 1. **Project detection** — Scans the workspace for `.csproj` files and inspects their `PackageReference` entries for known test framework packages (NUnit, xUnit, MSTest)
 2. **Test discovery** — Parses `.cs` source files in each test project for test attributes (`[Test]`, `[Fact]`, `[TestMethod]`, `[TestCase]`, `[Theory]`, etc.) to extract fully-qualified test names and source locations
 3. **Tree view** — Builds a hierarchical tree (Project → Namespace → Class → Method) displayed in a custom Activity Bar view
-4. **Execution** — Runs `dotnet test <csproj> --no-restore --logger trx --results-directory <temp>` with an optional `--filter` and parses the resulting TRX XML for pass/fail/skip results
-5. **Debugging** — Spawns `dotnet test` with `VSTEST_HOST_DEBUG=1`, monitors stdout for the test host PID, and calls `vscode.debug.startDebugging` with a `coreclr` attach configuration
+4. **Execution** — Runs `dotnet test` with an optional `--filter` and parses the resulting TRX XML for pass/fail/skip results
+5. **Debugging** — Spawns `dotnet test` with `VSTEST_HOST_DEBUG=1`, monitors stdout for the test host PID, and attaches the `coreclr` debugger
 
-## Install
+## Contributing
 
-```bash
-# From the extension directory
-npm install
-npm run compile
-npx @vscode/vsce package --allow-missing-repository
-# Then: Cursor → Extensions → ⋯ → Install from VSIX
-```
-
-## Development
-
-```bash
-npm install          # install dependencies
-npm run compile      # build once (tsc)
-npm run watch        # rebuild on changes
-```
-
-Press **F5** in Cursor / VS Code to launch an Extension Development Host with the extension loaded.
-
-## Tech Stack
-
-- **TypeScript** (strict mode, ES2022, CommonJS output)
-- **VS Code Extension API** (`^1.85.0`)
-- **fast-xml-parser** — TRX result parsing
-- **@vscode/vsce** — VSIX packaging
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, build instructions, and project architecture.
 
 ## License
 
-Contact the publisher for license information.
+MIT — see [LICENSE](LICENSE) for details.

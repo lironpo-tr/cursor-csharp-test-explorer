@@ -256,6 +256,54 @@ describe('matchAndApplyResults', () => {
         expect(node2.state).toBe('failed');
     });
 
+    it('should match results for tests selected from different classes', () => {
+        const nodeA = makeMethodNode('NS.ClassA.TestAlpha');
+        const nodeB = makeMethodNode('NS.ClassB.TestBeta');
+        const nodeC = makeMethodNode('NS.ClassC.TestGamma');
+        const summary: TrxSummary = {
+            total: 3,
+            passed: 2,
+            failed: 1,
+            skipped: 0,
+            duration: 450,
+            results: [
+                { testName: 'NS.ClassA.TestAlpha', outcome: 'Passed', duration: 100 },
+                { testName: 'NS.ClassB.TestBeta', outcome: 'Failed', errorMessage: 'assertion failed', duration: 200 },
+                { testName: 'NS.ClassC.TestGamma', outcome: 'Passed', duration: 150 },
+            ],
+        };
+
+        matchAndApplyResults(summary, [nodeA, nodeB, nodeC], treeProvider, mockLogger);
+
+        expect(nodeA.state).toBe('passed');
+        expect(nodeB.state).toBe('failed');
+        expect(nodeB.errorMessage).toBe('assertion failed');
+        expect(nodeC.state).toBe('passed');
+    });
+
+    it('should leave unmatched nodes unchanged when only a subset has results', () => {
+        const node1 = makeMethodNode('NS.Class.Test1');
+        const node2 = makeMethodNode('NS.Class.Test2');
+        const node3 = makeMethodNode('NS.Class.Test3');
+        const summary: TrxSummary = {
+            total: 2,
+            passed: 2,
+            failed: 0,
+            skipped: 0,
+            duration: 200,
+            results: [
+                { testName: 'NS.Class.Test1', outcome: 'Passed', duration: 100 },
+                { testName: 'NS.Class.Test3', outcome: 'Passed', duration: 100 },
+            ],
+        };
+
+        matchAndApplyResults(summary, [node1, node2, node3], treeProvider, mockLogger);
+
+        expect(node1.state).toBe('passed');
+        expect(node2.state).toBe('none');
+        expect(node3.state).toBe('passed');
+    });
+
     it('should match by suffix when TRX uses full FQN and node uses partial', () => {
         const node = makeMethodNode('Class.TestMethod');
         const summary: TrxSummary = {

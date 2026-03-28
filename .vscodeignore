@@ -1,3 +1,4 @@
+releases/**
 .vscode/**
 .vscode-test/**
 src/**

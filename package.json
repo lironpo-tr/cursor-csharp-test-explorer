@@ -2,7 +2,7 @@
   "name": "cursor-csharp-test-explorer",
   "displayName": "C# Test Explorer",
   "description": "Discover, run, and debug C# tests (NUnit, xUnit, MSTest) with a sidebar tree view",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "publisher": "lironpo",
   "engines": {
     "vscode": "^1.85.0"
@@ -172,6 +172,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
+    "package": "node -e \"require('fs').mkdirSync('releases',{recursive:true})\" && vsce package --out releases",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",

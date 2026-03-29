@@ -130,7 +130,16 @@ function parseTestMethods(
                 };
 
                 if (pendingParams.length > 0) {
-                    const paramTypes = parseMethodParamTypes(trimmed);
+                    let signatureLine = trimmed;
+                    if (signatureLine.includes('(') && !signatureLine.includes(')')) {
+                        for (let j = i + 1; j < lines.length; j++) {
+                            signatureLine += ' ' + lines[j].trim();
+                            if (lines[j].includes(')')) {
+                                break;
+                            }
+                        }
+                    }
+                    const paramTypes = parseMethodParamTypes(signatureLine);
                     for (const params of pendingParams) {
                         const formatted = formatTestCaseParams(params, paramTypes);
                         results.push({

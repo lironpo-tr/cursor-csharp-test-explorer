@@ -16,14 +16,20 @@ An issue is an investigation issue when any of these are true:
 - Multiple components or systems may be involved.
 - The user or you explicitly frame the task as "investigate", "explore", or "look into".
 
-## 2. Create the Findings File
+## 2. Start Investigating Immediately
 
-Before starting any investigation, create a findings file:
+When an issue is identified as requiring investigation, **start exploring the codebase right away**. Do NOT create the findings file first — begin by reading relevant source files, tracing the code path, and forming hypotheses based on what you find.
+
+The findings file is a record of what you discovered, not a planning document. Create it only after you have meaningful findings to write down (see step 3).
+
+## 3. Create the Findings File (After Initial Exploration)
+
+Once you have explored the relevant code and formed initial hypotheses, create the findings file to record what you've learned so far:
 
 - **Location:** `.cursor/investigations/<issue-number>-<short-description>.md`
 - **Example:** `.cursor/investigations/45-testcase-duplicate-after-run.md`
 
-Initialize it with this template:
+Initialize it with this template, filling in the sections you already have findings for:
 
 ```markdown
 # Investigation: #<issue-number> — <title>
@@ -51,7 +57,7 @@ Initialize it with this template:
 <filled in when a fix approach is clear — leave blank until then>
 ```
 
-## 3. During Investigation
+## 4. During Investigation
 
 As you explore the codebase, logs, or external systems:
 
@@ -59,7 +65,7 @@ As you explore the codebase, logs, or external systems:
 2. **Check off or refine hypotheses** as evidence confirms or rules them out.
 3. **Keep findings structured** — use sub-headings under `## Findings` for each area explored so a future reader (or a new chat session) can quickly parse what was covered.
 
-## 4. Before Ending a Chat Session
+## 5. Before Ending a Chat Session
 
 If the investigation is not yet complete and the chat context is getting large:
 
@@ -68,7 +74,7 @@ If the investigation is not yet complete and the chat context is getting large:
 3. Set `**Status:**` to `In Progress`.
 4. Commit the findings file: `chore: update investigation for #<issue-number>`.
 
-## 5. Resuming in a New Chat Session
+## 6. Resuming in a New Chat Session
 
 When the user opens a new chat to continue an investigation:
 
@@ -76,11 +82,17 @@ When the user opens a new chat to continue an investigation:
 2. Use it as the starting context — do not re-explore areas already covered.
 3. Continue from the `## Next Steps` section.
 
-## 6. Concluding the Investigation
+## 7. Concluding the Investigation — STOP Before Implementation
 
 When the root cause is identified:
 
-1. Fill in `## Root Cause` and `## Proposed Fix`.
+1. Fill in `## Root Cause` and `## Proposed Fix` in the findings file.
 2. Set `**Status:**` to `Concluded`.
-3. Commit the findings file.
-4. Proceed with the normal GitHub Issue Workflow (branch, implement, PR).
+3. Commit the findings file: `chore: conclude investigation for #<issue-number>`.
+4. **STOP and present the conclusion to the user.** Summarize:
+   - What the root cause is.
+   - What the proposed fix is.
+   - Which files will need to change.
+5. **Wait for the user's go-ahead before starting implementation.** Do NOT proceed to branch creation, code changes, or the GitHub Issue Workflow until the user explicitly confirms.
+
+This pause ensures the user can review the findings, ask questions, adjust the approach, or redirect before any code is written.

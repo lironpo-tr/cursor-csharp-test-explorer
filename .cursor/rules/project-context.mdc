@@ -38,7 +38,8 @@ src/
     ├── logger.ts             # Logger interface for injectable logging abstraction
     ├── outputChannel.ts      # OutputChannelLogger implementation + convenience wrappers
     ├── dotnetCli.ts          # Wrapper for spawning dotnet CLI processes
-    └── testItemUtils.ts      # Shared helpers for TestItem tag storage and parent-chain lookups
+    ├── testItemUtils.ts      # Shared helpers for TestItem tag storage and parent-chain lookups
+    └── testNameUtils.ts      # Normalizes test names for matching (enum prefixes, boolean casing, whitespace)
 ```
 
 ## Key Flows

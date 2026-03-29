@@ -1,24 +1,14 @@
 import { TestTreeProvider, TestTreeNode, TestState } from '../ui/testTreeProvider';
 import { TrxSummary } from './trxParser';
 import { Logger } from '../utils/logger';
+import { normalizeTestName } from '../utils/testNameUtils';
+
+export { normalizeTestName };
 
 export interface ResultDetails {
     errorMessage?: string;
     stackTrace?: string;
     duration?: number;
-}
-
-/**
- * Normalizes parameter formatting in test names for comparison.
- * TRX output and source-code discovery may differ in whitespace within parameter lists
- * (e.g., "Method(1, 2)" vs "Method(1,2)").
- */
-export function normalizeTestName(name: string): string {
-    const parenIdx = name.indexOf('(');
-    if (parenIdx === -1) {
-        return name;
-    }
-    return name.substring(0, parenIdx) + name.substring(parenIdx).replace(/,\s+/g, ',');
 }
 
 export function applyResultState(

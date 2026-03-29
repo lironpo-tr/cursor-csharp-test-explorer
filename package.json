@@ -5,6 +5,10 @@
     "version": "0.8.2",
     "license": "MIT",
     "publisher": "lironpo",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/lironpo-tr/cursor-csharp-test-explorer.git"
+    },
     "engines": {
         "vscode": "^1.85.0"
     },

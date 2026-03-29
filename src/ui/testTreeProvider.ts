@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { DiscoveredTest } from '../discovery/dotnetDiscoverer';
 import { TestProject } from '../discovery/projectDetector';
+import { normalizeTestName } from '../utils/testNameUtils';
 
 export type TestNodeType = 'project' | 'namespace' | 'class' | 'method' | 'parameterizedCase';
 export type TestState = 'none' | 'running' | 'passed' | 'failed' | 'skipped';
@@ -357,18 +358,19 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
 
     /**
      * Searches for an existing parameterizedCase node whose FQN matches
-     * the given FQN after normalizing parameter whitespace and applying
-     * suffix matching. This prevents duplicate case nodes when the TRX
-     * result name differs from the discovered FQN only in formatting
-     * (e.g., "Add(1,2)" vs "Add(1, 2)").
+     * the given FQN after normalizing parameters (whitespace, enum prefixes,
+     * boolean casing) and applying suffix matching. This prevents duplicate
+     * case nodes when the TRX result name differs from the discovered FQN
+     * only in formatting (e.g., "Add(1,2)" vs "Add(1, 2)" or
+     * "Method(FeeTypes.OverWeekend,false)" vs "Method(OverWeekend,False)").
      */
     private findCaseByNormalizedFqn(caseFqn: string): TestTreeNode | undefined {
-        const normalized = TestTreeProvider.normalizeParamWhitespace(caseFqn);
+        const normalized = normalizeTestName(caseFqn);
         for (const [, node] of this.allNodes) {
             if (node.nodeType !== 'parameterizedCase') {
                 continue;
             }
-            const normalizedFqn = TestTreeProvider.normalizeParamWhitespace(node.fqn);
+            const normalizedFqn = normalizeTestName(node.fqn);
             if (
                 normalizedFqn === normalized ||
                 normalizedFqn.endsWith(`.${normalized}`) ||
@@ -378,17 +380,6 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
             }
         }
         return undefined;
-    }
-
-    private static normalizeParamWhitespace(name: string): string {
-        const parenIdx = name.indexOf('(');
-        if (parenIdx === -1) {
-            return name;
-        }
-        return (
-            name.substring(0, parenIdx) +
-            name.substring(parenIdx).replace(/,\s+/g, ',')
-        );
     }
 
     private subtreeMatchesFilter(node: TestTreeNode): boolean {

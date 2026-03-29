@@ -79,4 +79,28 @@ describe('normalizeTestName', () => {
     it('should handle string params containing commas', () => {
         expect(normalizeTestName('Method("a,b", 1)')).toBe('Method("a,b",1)');
     });
+
+    it('should preserve decimal d suffix in parameters', () => {
+        expect(normalizeTestName('Method(10.5258d, True, 10.5264d, 4)')).toBe(
+            'Method(10.5258d,True,10.5264d,4)',
+        );
+    });
+
+    it('should preserve float f suffix in parameters', () => {
+        expect(normalizeTestName('Method(3.14f, 1)')).toBe('Method(3.14f,1)');
+    });
+
+    it('should normalize the exact bug report case (decimal + bool)', () => {
+        const source = 'MyTest(10.5258d, True, 10.5264d, 4)';
+        const runtime = 'MyTest(10.5258d,True,10.5264d,4)';
+
+        expect(normalizeTestName(source)).toBe(normalizeTestName(runtime));
+    });
+
+    it('should normalize FQN with decimal suffixed params', () => {
+        const source = 'NS.Class.MyTest(10.5258d, True, 10.5264d, 4)';
+        const runtime = 'NS.Class.MyTest(10.5258d,True,10.5264d,4)';
+
+        expect(normalizeTestName(source)).toBe(normalizeTestName(runtime));
+    });
 });

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
 import { Logger } from '../utils/logger';
+import { splitParams } from '../utils/testNameUtils';
 import { TestProject } from './projectDetector';
 import {
     TEST_ATTRIBUTE_REGEX,
@@ -129,12 +130,14 @@ function parseTestMethods(
                 };
 
                 if (pendingParams.length > 0) {
+                    const paramTypes = parseMethodParamTypes(trimmed);
                     for (const params of pendingParams) {
+                        const formatted = formatTestCaseParams(params, paramTypes);
                         results.push({
                             ...shared,
-                            fullyQualifiedName: `${baseFqn}(${params})`,
-                            displayName: `${methodName}(${params})`,
-                            parameters: params,
+                            fullyQualifiedName: `${baseFqn}(${formatted})`,
+                            displayName: `${methodName}(${formatted})`,
+                            parameters: formatted,
                         });
                     }
                 } else {
@@ -171,6 +174,116 @@ function parseTestMethods(
     }
 
     return results;
+}
+
+/**
+ * Extracts C# parameter types from a method signature line.
+ * Returns an empty array if the closing paren is not on the same line (multi-line signature).
+ */
+export function parseMethodParamTypes(line: string): string[] {
+    const openParen = line.indexOf('(');
+    if (openParen === -1) {
+        return [];
+    }
+
+    let depth = 0;
+    let closeParen = -1;
+    for (let i = openParen; i < line.length; i++) {
+        if (line[i] === '(') {
+            depth++;
+        }
+        if (line[i] === ')') {
+            depth--;
+            if (depth === 0) {
+                closeParen = i;
+                break;
+            }
+        }
+    }
+
+    if (closeParen === -1) {
+        return [];
+    }
+
+    const paramStr = line.substring(openParen + 1, closeParen).trim();
+    if (!paramStr) {
+        return [];
+    }
+
+    return paramStr.split(',').map((p) => {
+        const tokens = p.trim().split(/\s+/);
+        let idx = 0;
+        while (idx < tokens.length - 1 && /^(out|ref|in|params|this)$/.test(tokens[idx])) {
+            idx++;
+        }
+        return tokens[idx]?.replace(/\?$/, '') || '';
+    });
+}
+
+const NUMERIC_LITERAL = /^(-?\d+(?:\.\d+)?)[dDfFmMuUlL]{0,2}$/;
+
+/**
+ * Formats a single parameter value based on its declared C# type,
+ * replicating NUnit's canonical test-name formatting.
+ */
+export function formatParamValue(value: string, type: string): string {
+    const v = value.trim();
+
+    if (v.startsWith('"') || v.startsWith("'")) {
+        return v;
+    }
+
+    const lower = type.toLowerCase();
+    const numMatch = v.match(NUMERIC_LITERAL);
+
+    if (numMatch) {
+        const numPart = numMatch[1];
+        if (lower === 'decimal') {
+            return numPart + 'd';
+        }
+        if (lower === 'float' || lower === 'single') {
+            return numPart + 'f';
+        }
+        return numPart;
+    }
+
+    if (lower === 'bool' || lower === 'boolean') {
+        if (v.toLowerCase() === 'true') {
+            return 'True';
+        }
+        if (v.toLowerCase() === 'false') {
+            return 'False';
+        }
+    }
+
+    if (/^[A-Za-z_]/.test(v) && !v.includes('(')) {
+        const dotIdx = v.lastIndexOf('.');
+        if (dotIdx !== -1) {
+            return v.substring(dotIdx + 1);
+        }
+    }
+
+    return v;
+}
+
+/**
+ * Formats all TestCase parameter values based on method parameter types
+ * to produce the NUnit-canonical test name.
+ * Falls back to raw whitespace-stripped params when types are unavailable.
+ */
+function formatTestCaseParams(rawParams: string, paramTypes: string[]): string {
+    const values = splitParams(rawParams);
+
+    if (paramTypes.length === 0) {
+        return values.map((v) => v.trim()).join(',');
+    }
+
+    return values
+        .map((val, i) => {
+            const type = i < paramTypes.length ? paramTypes[i] : '';
+            return formatParamValue(val, type);
+        })
+        .join(',');
 }
 
 /** Extracts the argument string from a parameterized test attribute, or undefined if not a match. */

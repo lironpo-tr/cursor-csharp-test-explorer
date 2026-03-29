@@ -7,6 +7,7 @@ import {
     getFqn,
     findProjectPath,
 } from '../utils/testItemUtils';
+import { normalizeTestName } from '../utils/testNameUtils';
 
 /**
  * Builds a `dotnet test --filter` expression from a set of TestItems.
@@ -46,7 +47,7 @@ export function buildFilter(items: readonly vscode.TestItem[]): FilterResult {
         switch (nodeType) {
             case 'parameterizedCase':
             case 'method':
-                expressions.push(`FullyQualifiedName=${escapeFilter(fqn)}`);
+                expressions.push(`FullyQualifiedName=${escapeFilter(normalizeTestName(fqn))}`);
                 break;
             case 'class':
                 expressions.push(`FullyQualifiedName~${escapeFilter(fqn)}`);

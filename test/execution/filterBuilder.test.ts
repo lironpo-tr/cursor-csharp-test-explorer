@@ -261,7 +261,7 @@ describe('buildFilter', () => {
 
         const result = buildFilter([item as any]);
 
-        expect(result.filter).toBe('FullyQualifiedName=NS.Class.Add\\(1, 2, 3\\)');
+        expect(result.filter).toBe('FullyQualifiedName=NS.Class.Add\\(1,2,3\\)');
     });
 
     it('should join parameterizedCase and method filters with OR', () => {
@@ -279,7 +279,31 @@ describe('buildFilter', () => {
         const result = buildFilter([case1 as any, method as any]);
 
         expect(result.filter).toBe(
-            '(FullyQualifiedName=NS.Class.Add\\(1, 2\\)) | (FullyQualifiedName=NS.Class.OtherTest)',
+            '(FullyQualifiedName=NS.Class.Add\\(1,2\\)) | (FullyQualifiedName=NS.Class.OtherTest)',
         );
+    });
+
+    it('should normalize boolean casing in parameterizedCase filter', () => {
+        const item = makeTestItem('case1', {
+            nodeType: 'parameterizedCase',
+            fqn: 'NS.Class.Test(true, false)',
+            projectPath: '/proj.csproj',
+        });
+
+        const result = buildFilter([item as any]);
+
+        expect(result.filter).toBe('FullyQualifiedName=NS.Class.Test\\(True,False\\)');
+    });
+
+    it('should normalize enum prefixes in parameterizedCase filter', () => {
+        const item = makeTestItem('case1', {
+            nodeType: 'parameterizedCase',
+            fqn: 'NS.Class.Test(FeeTypes.OverWeekend, 1)',
+            projectPath: '/proj.csproj',
+        });
+
+        const result = buildFilter([item as any]);
+
+        expect(result.filter).toBe('FullyQualifiedName=NS.Class.Test\\(OverWeekend,1\\)');
     });
 });

@@ -53,7 +53,7 @@ function normalizeParam(raw: string): string {
     return param;
 }
 
-function splitParams(params: string): string[] {
+export function splitParams(params: string): string[] {
     const result: string[] = [];
     let current = '';
     let inString = false;

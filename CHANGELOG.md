@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.8.4](https://github.com/lironpo-tr/cursor-csharp-test-explorer/compare/cursor-csharp-test-explorer-v0.8.3...cursor-csharp-test-explorer-v0.8.4) (2026-03-29)
+
+
+### Bug Fixes
+
+* format TestCase params using method signature types to match NUnit canonical names ([78b7280](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/78b7280a7da21b898f6f0c4f9cc24b0f18c09e87))
+* format TestCase params using method signature types to match NUnit canonical names ([6d4c622](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/6d4c622d16a4ac29bd9d9a798813248ccb2fb536))
+* strip enum prefixes and handle null in formatParamValue during discovery ([c4d3cb4](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/c4d3cb42243726aeaea74aeee2977577067b3d04))
+
+
+### Miscellaneous
+
+* convert workflow rules to on-demand skills ([8f4adba](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/8f4adba2b76bf72de0275d7d8eddd40d27a35234))
+* convert workflow rules to on-demand skills ([cbe7048](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/cbe7048e4d853c8d5ffddb5df81851cae3783fe0))
+
 ## [0.8.3](https://github.com/lironpo-tr/cursor-csharp-test-explorer/compare/cursor-csharp-test-explorer-v0.8.2...cursor-csharp-test-explorer-v0.8.3) (2026-03-29)
 
 

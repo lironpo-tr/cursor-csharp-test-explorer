@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.8.3](https://github.com/lironpo-tr/cursor-csharp-test-explorer/compare/cursor-csharp-test-explorer-v0.8.2...cursor-csharp-test-explorer-v0.8.3) (2026-03-29)
+
+
+### Bug Fixes
+
+* normalize enum prefixes and boolean casing in test name matching ([f3ae135](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/f3ae135b0a1980ffd7cfb903089274eba7e0b12a))
+* normalize enum prefixes and boolean casing in test name matching ([0cd3483](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/0cd3483be478240d555462d97656d8366f7b9424)), closes [#53](https://github.com/lironpo-tr/cursor-csharp-test-explorer/issues/53)
+
+
+### Miscellaneous
+
+* add repository field to package.json ([1eb086c](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/1eb086c8f657af8a07a0563de3b855d06026fd7c))
+
 ## [0.8.2](https://github.com/lironpo-tr/cursor-csharp-test-explorer/compare/cursor-csharp-test-explorer-v0.8.1...cursor-csharp-test-explorer-v0.8.2) (2026-03-29)
 
 

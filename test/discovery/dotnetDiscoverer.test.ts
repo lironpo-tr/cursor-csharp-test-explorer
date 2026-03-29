@@ -222,8 +222,8 @@ describe('formatParamValue', () => {
         expect(formatParamValue('10.5258', 'decimal')).toBe('10.5258d');
     });
 
-    it('should add d suffix for integer value with decimal type', () => {
-        expect(formatParamValue('10', 'decimal')).toBe('10d');
+    it('should not add d suffix for integer value with decimal type', () => {
+        expect(formatParamValue('10', 'decimal')).toBe('10');
     });
 
     it('should add d suffix for negative decimal', () => {
@@ -232,6 +232,20 @@ describe('formatParamValue', () => {
 
     it('should strip C# m suffix and add NUnit d suffix for decimal', () => {
         expect(formatParamValue('10.5258m', 'decimal')).toBe('10.5258d');
+    });
+
+    it('should convert explicit C# m suffix on integer to NUnit d', () => {
+        expect(formatParamValue('10m', 'decimal')).toBe('10d');
+    });
+
+    it('should not add suffix to plain integers even when param is decimal', () => {
+        expect(formatParamValue('10', 'decimal')).toBe('10');
+        expect(formatParamValue('100', 'decimal')).toBe('100');
+        expect(formatParamValue('-5', 'decimal')).toBe('-5');
+    });
+
+    it('should not add suffix to plain integers even when param is float', () => {
+        expect(formatParamValue('10', 'float')).toBe('10');
     });
 
     it('should add f suffix for float type', () => {

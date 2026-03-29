@@ -141,13 +141,27 @@ function parseTestMethods(
                     }
                     const paramTypes = parseMethodParamTypes(signatureLine);
                     for (const params of pendingParams) {
-                        const formatted = formatTestCaseParams(params, paramTypes);
-                        results.push({
-                            ...shared,
-                            fullyQualifiedName: `${baseFqn}(${formatted})`,
-                            displayName: `${methodName}(${formatted})`,
-                            parameters: formatted,
-                        });
+                        const parsed = parseTestCaseArgs(params);
+                        const formatted = formatTestCaseParams(
+                            parsed.positionalArgs,
+                            paramTypes,
+                        );
+
+                        if (parsed.testName) {
+                            results.push({
+                                ...shared,
+                                fullyQualifiedName: `${baseFqn}("${parsed.testName}")`,
+                                displayName: parsed.testName,
+                                parameters: formatted,
+                            });
+                        } else {
+                            results.push({
+                                ...shared,
+                                fullyQualifiedName: `${baseFqn}(${formatted})`,
+                                displayName: `${methodName}(${formatted})`,
+                                parameters: formatted,
+                            });
+                        }
                     }
                 } else {
                     results.push({
@@ -293,19 +307,50 @@ export function formatParamValue(value: string, type: string): string {
     return v;
 }
 
+interface ParsedTestCaseArgs {
+    positionalArgs: string[];
+    testName?: string;
+}
+
+const NAMED_PARAM = /^[A-Za-z_]\w*\s*=/;
+
+/**
+ * Separates positional parameter values from named attribute properties
+ * (TestName, ExpectedResult, Description, etc.) in a TestCase argument list.
+ */
+export function parseTestCaseArgs(rawArgs: string): ParsedTestCaseArgs {
+    const all = splitParams(rawArgs);
+    const positional: string[] = [];
+    let testName: string | undefined;
+
+    for (const param of all) {
+        const trimmed = param.trim();
+        if (NAMED_PARAM.test(trimmed)) {
+            const eqIdx = trimmed.indexOf('=');
+            const name = trimmed.substring(0, eqIdx).trim();
+            const value = trimmed.substring(eqIdx + 1).trim();
+            if (name === 'TestName') {
+                testName = value.replace(/^"(.*)"$/, '$1');
+            }
+            continue;
+        }
+        positional.push(trimmed);
+    }
+
+    return { positionalArgs: positional, testName };
+}
+
 /**
  * Formats all TestCase parameter values based on method parameter types
  * to produce the NUnit-canonical test name.
  * Falls back to raw whitespace-stripped params when types are unavailable.
  */
-function formatTestCaseParams(rawParams: string, paramTypes: string[]): string {
-    const values = splitParams(rawParams);
-
+function formatTestCaseParams(positionalArgs: string[], paramTypes: string[]): string {
     if (paramTypes.length === 0) {
-        return values.map((v) => v.trim()).join(',');
+        return positionalArgs.join(',');
     }
 
-    return values
+    return positionalArgs
         .map((val, i) => {
             const type = i < paramTypes.length ? paramTypes[i] : '';
             return formatParamValue(val, type);

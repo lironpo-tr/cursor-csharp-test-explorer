@@ -30,7 +30,8 @@ export function applyResultState(
  * Matches TRX results to tree nodes using a multi-pass strategy:
  * 1. Exact FQN match (normalized for whitespace differences)
  * 2. Dynamic parameterized case node creation for unmatched parameterized results
- * 3. Base name match (stripping parameters)
+ * 3. Base name match (stripping parameters) — skipped when a dynamic parent was
+ *    found, to avoid clobbering the parent with individual case results
  * 4. Short name fallback (last segment of FQN)
  */
 export function matchAndApplyResults(
@@ -50,6 +51,8 @@ export function matchAndApplyResults(
         list.push(m);
         methodsByName.set(shortName, list);
     }
+
+    const dynamicParents = new Set<string>();
 
     for (const tr of summary.results) {
         const state: TestState =
@@ -98,12 +101,14 @@ export function matchAndApplyResults(
                 }
 
                 if (dynamicNode) {
+                    dynamicParents.add(baseName);
+                    dynamicParents.add(shortMethod);
                     applyResultState(dynamicNode, state, details, treeProvider);
                     matched = true;
                 }
             }
 
-            if (!matched) {
+            if (!matched && !dynamicParents.has(baseName)) {
                 matched = tryMatchResult(baseName, state, details, methodNodes, treeProvider);
             }
         }
@@ -114,6 +119,11 @@ export function matchAndApplyResults(
                     .replace(/\(.*\)$/, '')
                     .split('.')
                     .pop() ?? tr.testName;
+
+            if (dynamicParents.has(shortName)) {
+                continue;
+            }
+
             const candidates = methodsByName.get(shortName);
             if (candidates && candidates.length > 0) {
                 for (const c of candidates) {

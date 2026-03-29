@@ -15,13 +15,24 @@ export class TestTreeNode {
     sourceUri?: vscode.Uri;
     sourceLine?: number;
     projectPath?: string;
+    private _label: string;
 
     constructor(
         public readonly id: string,
-        public readonly label: string,
+        label: string,
         public readonly nodeType: TestNodeType,
         public readonly fqn: string,
-    ) {}
+    ) {
+        this._label = label;
+    }
+
+    get label(): string {
+        return this._label;
+    }
+
+    set label(value: string) {
+        this._label = value;
+    }
 
     get children(): readonly TestTreeNode[] {
         return this._children;
@@ -195,6 +206,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
 
                     for (const [methodName, cases] of methodMap) {
                         const hasParameterizedCases = cases.some((c) => c.parameters !== undefined);
+                        const hasDynamicSource = cases.some((c) => c.hasDynamicSource);
 
                         if (hasParameterizedCases) {
                             const baseFqn = classFqn + '.' + methodName;
@@ -223,6 +235,19 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
                                 methodNode.addChild(caseNode);
                             }
 
+                            classNode.addChild(methodNode);
+                        } else if (hasDynamicSource) {
+                            const baseFqn = classFqn + '.' + methodName;
+                            const methodNode = new TestTreeNode(
+                                `method:${pid}:${baseFqn}`,
+                                `${methodName} (dynamic)`,
+                                'method',
+                                baseFqn,
+                            );
+                            methodNode.projectPath = project.csprojPath;
+                            methodNode.sourceUri = cases[0].sourceUri;
+                            methodNode.sourceLine = cases[0].sourceLine;
+                            this.allNodes.set(methodNode.id, methodNode);
                             classNode.addChild(methodNode);
                         } else {
                             const test = cases[0];
@@ -345,6 +370,11 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
 
         this.allNodes.set(caseNode.id, caseNode);
         parentNode.addChild(caseNode);
+
+        const methodName = parentNode.fqn.split('.').pop() ?? parentNode.fqn;
+        parentNode.label = `${methodName} (${parentNode.children.length})`;
+        this._onDidChangeTreeData.fire(parentNode);
+
         return caseNode;
     }
 

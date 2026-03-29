@@ -659,6 +659,67 @@ describe('matchAndApplyResults — enum prefix and boolean casing normalization'
     });
 });
 
+describe('matchAndApplyResults — TestCaseSource parent protection', () => {
+    let mockLogger: Logger;
+
+    beforeEach(() => {
+        mockLogger = createMockLogger();
+        vi.clearAllMocks();
+    });
+
+    it('should not overwrite parent method with individual case results', () => {
+        const provider = buildTreeWithTests([
+            makeTest('NS', 'Cls', 'Divide', { hasDynamicSource: true }),
+        ]);
+        const methodNodes = provider.getAllMethodNodes();
+        const summary: TrxSummary = {
+            total: 3,
+            passed: 2,
+            failed: 1,
+            skipped: 0,
+            duration: 150,
+            results: [
+                { testName: 'NS.Cls.Divide(10,2,5)', outcome: 'Passed', duration: 50 },
+                { testName: 'NS.Cls.Divide(6,3,2)', outcome: 'Passed', duration: 50 },
+                { testName: 'NS.Cls.Divide(1,0,-1)', outcome: 'Failed', errorMessage: 'Divide by zero', duration: 50 },
+            ],
+        };
+
+        matchAndApplyResults(summary, methodNodes, provider, mockLogger);
+
+        const methodNode = provider.getNodeByFqn('NS.Cls.Divide');
+        expect(methodNode).toBeDefined();
+        expect(methodNode!.children).toHaveLength(3);
+        expect(methodNode!.children[0].state).toBe('passed');
+        expect(methodNode!.children[1].state).toBe('passed');
+        expect(methodNode!.children[2].state).toBe('failed');
+        expect(methodNode!.children[2].errorMessage).toBe('Divide by zero');
+    });
+
+    it('should update parent label with dynamic child count after result matching', () => {
+        const provider = buildTreeWithTests([
+            makeTest('NS', 'Cls', 'Add', { hasDynamicSource: true }),
+        ]);
+        const methodNodes = provider.getAllMethodNodes();
+        const summary: TrxSummary = {
+            total: 2,
+            passed: 2,
+            failed: 0,
+            skipped: 0,
+            duration: 100,
+            results: [
+                { testName: 'NS.Cls.Add(1,2,3)', outcome: 'Passed', duration: 50 },
+                { testName: 'NS.Cls.Add(4,5,9)', outcome: 'Passed', duration: 50 },
+            ],
+        };
+
+        matchAndApplyResults(summary, methodNodes, provider, mockLogger);
+
+        const methodNode = provider.getNodeByFqn('NS.Cls.Add');
+        expect(methodNode!.label).toBe('Add (2)');
+    });
+});
+
 describe('matchAndApplyResults — TestCase duplicate prevention', () => {
     let mockLogger: Logger;
 

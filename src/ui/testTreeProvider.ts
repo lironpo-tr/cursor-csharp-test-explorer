@@ -325,7 +325,8 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
             return undefined;
         }
 
-        const existingCase = this.getNodeByFqn(caseFqn);
+        const existingCase =
+            this.getNodeByFqn(caseFqn) ?? this.findCaseByNormalizedFqn(caseFqn);
         if (existingCase) {
             return existingCase;
         }
@@ -352,6 +353,42 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TestTreeNode> {
 
     getNodeById(id: string): TestTreeNode | undefined {
         return this.allNodes.get(id);
+    }
+
+    /**
+     * Searches for an existing parameterizedCase node whose FQN matches
+     * the given FQN after normalizing parameter whitespace and applying
+     * suffix matching. This prevents duplicate case nodes when the TRX
+     * result name differs from the discovered FQN only in formatting
+     * (e.g., "Add(1,2)" vs "Add(1, 2)").
+     */
+    private findCaseByNormalizedFqn(caseFqn: string): TestTreeNode | undefined {
+        const normalized = TestTreeProvider.normalizeParamWhitespace(caseFqn);
+        for (const [, node] of this.allNodes) {
+            if (node.nodeType !== 'parameterizedCase') {
+                continue;
+            }
+            const normalizedFqn = TestTreeProvider.normalizeParamWhitespace(node.fqn);
+            if (
+                normalizedFqn === normalized ||
+                normalizedFqn.endsWith(`.${normalized}`) ||
+                normalized.endsWith(`.${normalizedFqn}`)
+            ) {
+                return node;
+            }
+        }
+        return undefined;
+    }
+
+    private static normalizeParamWhitespace(name: string): string {
+        const parenIdx = name.indexOf('(');
+        if (parenIdx === -1) {
+            return name;
+        }
+        return (
+            name.substring(0, parenIdx) +
+            name.substring(parenIdx).replace(/,\s+/g, ',')
+        );
     }
 
     private subtreeMatchesFilter(node: TestTreeNode): boolean {

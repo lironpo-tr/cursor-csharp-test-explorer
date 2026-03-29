@@ -558,3 +558,151 @@ describe('matchAndApplyResults — TestCaseSource (dynamic cases)', () => {
         );
     });
 });
+
+describe('matchAndApplyResults — TestCase duplicate prevention', () => {
+    let mockLogger: Logger;
+
+    beforeEach(() => {
+        mockLogger = createMockLogger();
+        vi.clearAllMocks();
+    });
+
+    it('should not duplicate discovered parameterized cases when TRX strips whitespace', () => {
+        const provider = buildTreeWithTests([
+            makeTest('NS', 'Cls', 'Add', {
+                fullyQualifiedName: 'NS.Cls.Add(1, 2)',
+                displayName: 'Add(1, 2)',
+                parameters: '1, 2',
+            }),
+            makeTest('NS', 'Cls', 'Add', {
+                fullyQualifiedName: 'NS.Cls.Add(3, 4)',
+                displayName: 'Add(3, 4)',
+                parameters: '3, 4',
+            }),
+        ]);
+        const methodNodes = provider.getAllMethodNodes();
+        const summary: TrxSummary = {
+            total: 2,
+            passed: 2,
+            failed: 0,
+            skipped: 0,
+            duration: 100,
+            results: [
+                { testName: 'Add(1,2)', outcome: 'Passed', duration: 50 },
+                { testName: 'Add(3,4)', outcome: 'Passed', duration: 50 },
+            ],
+        };
+
+        matchAndApplyResults(summary, methodNodes, provider, mockLogger);
+
+        const methodNode = provider.getNodeByFqn('NS.Cls.Add');
+        expect(methodNode).toBeDefined();
+        expect(methodNode!.children).toHaveLength(2);
+        expect(methodNode!.children[0].state).toBe('passed');
+        expect(methodNode!.children[1].state).toBe('passed');
+    });
+
+    it('should not duplicate cases when TRX uses FQN without spaces and source has spaces', () => {
+        const provider = buildTreeWithTests([
+            makeTest('NS', 'Cls', 'Calc', {
+                fullyQualifiedName: 'NS.Cls.Calc(1, 2, 3)',
+                displayName: 'Calc(1, 2, 3)',
+                parameters: '1, 2, 3',
+            }),
+        ]);
+        const methodNodes = provider.getAllMethodNodes();
+        const summary: TrxSummary = {
+            total: 1,
+            passed: 1,
+            failed: 0,
+            skipped: 0,
+            duration: 50,
+            results: [
+                { testName: 'NS.Cls.Calc(1,2,3)', outcome: 'Passed', duration: 50 },
+            ],
+        };
+
+        matchAndApplyResults(summary, methodNodes, provider, mockLogger);
+
+        const methodNode = provider.getNodeByFqn('NS.Cls.Calc');
+        expect(methodNode).toBeDefined();
+        expect(methodNode!.children).toHaveLength(1);
+        expect(methodNode!.children[0].state).toBe('passed');
+    });
+
+    it('should apply results to existing case nodes without creating duplicates (short TRX names)', () => {
+        const provider = buildTreeWithTests([
+            makeTest('App.Tests', 'MathTests', 'Add', {
+                fullyQualifiedName: 'App.Tests.MathTests.Add(1, 2)',
+                displayName: 'Add(1, 2)',
+                parameters: '1, 2',
+            }),
+            makeTest('App.Tests', 'MathTests', 'Add', {
+                fullyQualifiedName: 'App.Tests.MathTests.Add(3, 4)',
+                displayName: 'Add(3, 4)',
+                parameters: '3, 4',
+            }),
+        ]);
+
+        const caseNodes = provider.getAllMethodNodes().filter(
+            (n) => n.nodeType === 'parameterizedCase',
+        );
+        const summary: TrxSummary = {
+            total: 2,
+            passed: 1,
+            failed: 1,
+            skipped: 0,
+            duration: 200,
+            results: [
+                { testName: 'Add(1,2)', outcome: 'Passed', duration: 100 },
+                { testName: 'Add(3,4)', outcome: 'Failed', errorMessage: 'bad', duration: 100 },
+            ],
+        };
+
+        matchAndApplyResults(summary, caseNodes, provider, mockLogger);
+
+        const methodNode = provider.getNodeByFqn('App.Tests.MathTests.Add');
+        expect(methodNode).toBeDefined();
+        expect(methodNode!.children).toHaveLength(2);
+        expect(methodNode!.children[0].state).toBe('passed');
+        expect(methodNode!.children[1].state).toBe('failed');
+    });
+
+    it('should not duplicate when running from class level with mixed test types', () => {
+        const provider = buildTreeWithTests([
+            makeTest('NS', 'Cls', 'Add', {
+                fullyQualifiedName: 'NS.Cls.Add(1, 2)',
+                displayName: 'Add(1, 2)',
+                parameters: '1, 2',
+            }),
+            makeTest('NS', 'Cls', 'Add', {
+                fullyQualifiedName: 'NS.Cls.Add(3, 4)',
+                displayName: 'Add(3, 4)',
+                parameters: '3, 4',
+            }),
+            makeTest('NS', 'Cls', 'SimpleTest'),
+        ]);
+
+        const allLeafNodes = provider.getLeafTestNodes();
+        const summary: TrxSummary = {
+            total: 3,
+            passed: 3,
+            failed: 0,
+            skipped: 0,
+            duration: 150,
+            results: [
+                { testName: 'Add(1,2)', outcome: 'Passed', duration: 50 },
+                { testName: 'Add(3,4)', outcome: 'Passed', duration: 50 },
+                { testName: 'NS.Cls.SimpleTest', outcome: 'Passed', duration: 50 },
+            ],
+        };
+
+        matchAndApplyResults(summary, allLeafNodes, provider, mockLogger);
+
+        const methodNode = provider.getNodeByFqn('NS.Cls.Add');
+        expect(methodNode!.children).toHaveLength(2);
+
+        const simpleNode = provider.getNodeByFqn('NS.Cls.SimpleTest');
+        expect(simpleNode!.state).toBe('passed');
+    });
+});

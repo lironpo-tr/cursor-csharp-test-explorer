@@ -6,6 +6,7 @@ import {
     CLASS_REGEX,
     METHOD_REGEX,
     NAMESPACE_REGEX,
+    stripComments,
 } from './patterns';
 
 export interface SourceLocation {
@@ -52,18 +53,23 @@ function parseTestLocations(content: string, fileUri: vscode.Uri): Map<string, S
     let nextMethodIsTest = false;
     let braceDepth = 0;
     const classStack: { name: string; depth: number }[] = [];
+    const commentState = { inBlockComment: false };
 
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        const trimmed = line.trim();
+        const code = stripComments(line, commentState).trim();
 
-        const nsMatch = trimmed.match(NAMESPACE_REGEX);
+        if (!code) {
+            continue;
+        }
+
+        const nsMatch = code.match(NAMESPACE_REGEX);
         if (nsMatch) {
             currentNamespace = nsMatch[1];
             continue;
         }
 
-        const classMatch = trimmed.match(CLASS_REGEX);
+        const classMatch = code.match(CLASS_REGEX);
         if (classMatch) {
             currentClass = classMatch[1];
             classStack.push({ name: currentClass, depth: braceDepth });
@@ -74,12 +80,12 @@ function parseTestLocations(content: string, fileUri: vscode.Uri): Map<string, S
             result.set(`class:${classKey}`, { uri: fileUri, line: i });
         }
 
-        if (TEST_ATTRIBUTE_REGEX.test(trimmed)) {
+        if (TEST_ATTRIBUTE_REGEX.test(code)) {
             nextMethodIsTest = true;
         }
 
         if (nextMethodIsTest) {
-            const methodMatch = trimmed.match(METHOD_REGEX);
+            const methodMatch = code.match(METHOD_REGEX);
             if (methodMatch) {
                 const methodName = methodMatch[1];
                 const fqn = currentNamespace
@@ -90,7 +96,7 @@ function parseTestLocations(content: string, fileUri: vscode.Uri): Map<string, S
             }
         }
 
-        for (const ch of trimmed) {
+        for (const ch of code) {
             if (ch === '{') {
                 braceDepth++;
             }

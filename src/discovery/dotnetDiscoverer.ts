@@ -10,6 +10,7 @@ import {
     CLASS_REGEX,
     METHOD_REGEX,
     NAMESPACE_REGEX,
+    stripComments,
 } from './patterns';
 
 export interface DiscoveredTest {
@@ -81,38 +82,44 @@ function parseTestMethods(
         currentNamespace = fileScopedNs[1];
     }
 
+    const commentState = { inBlockComment: false };
+
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        const trimmed = line.trim();
+        const code = stripComments(line, commentState).trim();
+
+        if (!code) {
+            continue;
+        }
 
         if (!fileScopedNs) {
-            const nsMatch = trimmed.match(NAMESPACE_REGEX);
+            const nsMatch = code.match(NAMESPACE_REGEX);
             if (nsMatch) {
                 currentNamespace = nsMatch[1];
             }
         }
 
-        const classMatch = trimmed.match(CLASS_REGEX);
+        const classMatch = code.match(CLASS_REGEX);
         if (classMatch) {
             currentClass = classMatch[1];
             classStack.push({ name: currentClass, depth: braceDepth });
         }
 
-        if (TEST_ATTRIBUTE_REGEX.test(trimmed)) {
+        if (TEST_ATTRIBUTE_REGEX.test(code)) {
             nextMethodIsTest = true;
         }
 
-        if (DYNAMIC_SOURCE_ATTRIBUTE_REGEX.test(trimmed)) {
+        if (DYNAMIC_SOURCE_ATTRIBUTE_REGEX.test(code)) {
             nextMethodIsDynamicSource = true;
         }
 
-        const paramArgs = extractParameterArgs(trimmed);
+        const paramArgs = extractParameterArgs(code);
         if (paramArgs !== undefined) {
             pendingParams.push(paramArgs);
         }
 
         if (nextMethodIsTest) {
-            const methodMatch = trimmed.match(METHOD_REGEX);
+            const methodMatch = code.match(METHOD_REGEX);
             if (methodMatch && currentClass) {
                 const methodName = methodMatch[1];
                 const classFqn = currentNamespace
@@ -131,7 +138,7 @@ function parseTestMethods(
                 };
 
                 if (pendingParams.length > 0) {
-                    let signatureLine = trimmed;
+                    let signatureLine = code;
                     if (signatureLine.includes('(') && !signatureLine.includes(')')) {
                         for (let j = i + 1; j < lines.length; j++) {
                             signatureLine += ' ' + lines[j].trim();
@@ -179,7 +186,7 @@ function parseTestMethods(
             }
         }
 
-        for (const ch of trimmed) {
+        for (const ch of code) {
             if (ch === '{') {
                 braceDepth++;
             }

@@ -115,9 +115,10 @@ function parseTestMethods(
             const methodMatch = trimmed.match(METHOD_REGEX);
             if (methodMatch && currentClass) {
                 const methodName = methodMatch[1];
-                const baseFqn = currentNamespace
-                    ? `${currentNamespace}.${currentClass}.${methodName}`
-                    : `${currentClass}.${methodName}`;
+                const classFqn = currentNamespace
+                    ? `${currentNamespace}.${currentClass}`
+                    : currentClass;
+                const baseFqn = `${classFqn}.${methodName}`;
 
                 const shared = {
                     namespace: currentNamespace || currentClass,
@@ -150,7 +151,7 @@ function parseTestMethods(
                         if (parsed.testName) {
                             results.push({
                                 ...shared,
-                                fullyQualifiedName: `${baseFqn}("${parsed.testName}")`,
+                                fullyQualifiedName: `${classFqn}.${parsed.testName}`,
                                 displayName: parsed.testName,
                                 parameters: formatted,
                             });

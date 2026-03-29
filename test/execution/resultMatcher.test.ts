@@ -559,6 +559,106 @@ describe('matchAndApplyResults — TestCaseSource (dynamic cases)', () => {
     });
 });
 
+describe('matchAndApplyResults — enum prefix and boolean casing normalization', () => {
+    let mockLogger: Logger;
+
+    beforeEach(() => {
+        mockLogger = createMockLogger();
+        vi.clearAllMocks();
+    });
+
+    it('should not duplicate when source has enum prefix and TRX strips it', () => {
+        const provider = buildTreeWithTests([
+            makeTest('NS', 'Cls', 'IsAllowed', {
+                fullyQualifiedName: 'NS.Cls.IsAllowed(3, 4, FeeTypes.OverWeekend, false)',
+                displayName: 'IsAllowed(3, 4, FeeTypes.OverWeekend, false)',
+                parameters: '3, 4, FeeTypes.OverWeekend, false',
+            }),
+        ]);
+        const methodNodes = provider.getAllMethodNodes();
+        const summary: TrxSummary = {
+            total: 1,
+            passed: 1,
+            failed: 0,
+            skipped: 0,
+            duration: 50,
+            results: [
+                { testName: 'NS.Cls.IsAllowed(3, 4, OverWeekend, False)', outcome: 'Passed', duration: 50 },
+            ],
+        };
+
+        matchAndApplyResults(summary, methodNodes, provider, mockLogger);
+
+        const methodNode = provider.getNodeByFqn('NS.Cls.IsAllowed');
+        expect(methodNode).toBeDefined();
+        expect(methodNode!.children).toHaveLength(1);
+        expect(methodNode!.children[0].state).toBe('passed');
+    });
+
+    it('should match multiple enum-parameterized cases without duplicates', () => {
+        const provider = buildTreeWithTests([
+            makeTest('NS', 'Cls', 'Check', {
+                fullyQualifiedName: 'NS.Cls.Check(Status.Active, true)',
+                displayName: 'Check(Status.Active, true)',
+                parameters: 'Status.Active, true',
+            }),
+            makeTest('NS', 'Cls', 'Check', {
+                fullyQualifiedName: 'NS.Cls.Check(Status.Inactive, false)',
+                displayName: 'Check(Status.Inactive, false)',
+                parameters: 'Status.Inactive, false',
+            }),
+        ]);
+        const methodNodes = provider.getAllMethodNodes();
+        const summary: TrxSummary = {
+            total: 2,
+            passed: 1,
+            failed: 1,
+            skipped: 0,
+            duration: 100,
+            results: [
+                { testName: 'NS.Cls.Check(Active, True)', outcome: 'Passed', duration: 50 },
+                { testName: 'NS.Cls.Check(Inactive, False)', outcome: 'Failed', errorMessage: 'oops', duration: 50 },
+            ],
+        };
+
+        matchAndApplyResults(summary, methodNodes, provider, mockLogger);
+
+        const methodNode = provider.getNodeByFqn('NS.Cls.Check');
+        expect(methodNode).toBeDefined();
+        expect(methodNode!.children).toHaveLength(2);
+        expect(methodNode!.children[0].state).toBe('passed');
+        expect(methodNode!.children[1].state).toBe('failed');
+    });
+
+    it('should match when TRX uses short name with stripped enum prefix', () => {
+        const provider = buildTreeWithTests([
+            makeTest('App.Tests', 'FeeTests', 'IsAllowed', {
+                fullyQualifiedName: 'App.Tests.FeeTests.IsAllowed(3, 4, FeeTypes.OverWeekend, false)',
+                displayName: 'IsAllowed(3, 4, FeeTypes.OverWeekend, false)',
+                parameters: '3, 4, FeeTypes.OverWeekend, false',
+            }),
+        ]);
+        const methodNodes = provider.getAllMethodNodes();
+        const summary: TrxSummary = {
+            total: 1,
+            passed: 1,
+            failed: 0,
+            skipped: 0,
+            duration: 50,
+            results: [
+                { testName: 'IsAllowed(3,4,OverWeekend,False)', outcome: 'Passed', duration: 50 },
+            ],
+        };
+
+        matchAndApplyResults(summary, methodNodes, provider, mockLogger);
+
+        const methodNode = provider.getNodeByFqn('App.Tests.FeeTests.IsAllowed');
+        expect(methodNode).toBeDefined();
+        expect(methodNode!.children).toHaveLength(1);
+        expect(methodNode!.children[0].state).toBe('passed');
+    });
+});
+
 describe('matchAndApplyResults — TestCase duplicate prevention', () => {
     let mockLogger: Logger;
 

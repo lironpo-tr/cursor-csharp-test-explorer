@@ -35,7 +35,7 @@ describe('normalizeTestName', () => {
     it('should handle mixed types with spaces', () => {
         const result = normalizeTestName('NS.Cls.Add(1, "text", true)');
 
-        expect(result).toBe('NS.Cls.Add(1,"text",true)');
+        expect(result).toBe('NS.Cls.Add(1,"text",True)');
     });
 
     it('should handle multiple spaces after commas', () => {

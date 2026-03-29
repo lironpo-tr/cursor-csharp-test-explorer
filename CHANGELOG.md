@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.6](https://github.com/lironpo-tr/cursor-csharp-test-explorer/compare/cursor-csharp-test-explorer-v0.8.5...cursor-csharp-test-explorer-v0.8.6) (2026-03-29)
+
+
+### Bug Fixes
+
+* handle multi-line method signatures when parsing parameter types ([f3135ef](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/f3135efee33e6d24a505987ca415ad7818b4972c))
+* handle multi-line method signatures when parsing parameter types ([120ad72](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/120ad72ebb7e73413267d150aee3f110e1406fd5))
+
 ## [0.8.5](https://github.com/lironpo-tr/cursor-csharp-test-explorer/compare/cursor-csharp-test-explorer-v0.8.4...cursor-csharp-test-explorer-v0.8.5) (2026-03-29)
 
 

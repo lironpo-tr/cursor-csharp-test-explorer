@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.5](https://github.com/lironpo-tr/cursor-csharp-test-explorer/compare/cursor-csharp-test-explorer-v0.8.4...cursor-csharp-test-explorer-v0.8.5) (2026-03-29)
+
+
+### Bug Fixes
+
+* only add numeric suffix for fractional values, not plain integers ([dad64e5](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/dad64e5355803363f52ebef5c926e30bae61e25d))
+* only add numeric suffix for fractional values, not plain integers ([9a91ecf](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/9a91ecfe0a4e6c8d257adf0905a3ab917a7cc657))
+
 ## [0.8.4](https://github.com/lironpo-tr/cursor-csharp-test-explorer/compare/cursor-csharp-test-explorer-v0.8.3...cursor-csharp-test-explorer-v0.8.4) (2026-03-29)
 
 

@@ -220,11 +220,17 @@ export function parseMethodParamTypes(line: string): string[] {
     });
 }
 
-const NUMERIC_LITERAL = /^(-?\d+(?:\.\d+)?)[dDfFmMuUlL]{0,2}$/;
+const NUMERIC_LITERAL = /^(-?\d+(?:\.\d+)?)([dDfFmMuUlL]{0,2})$/;
 
 /**
  * Formats a single parameter value based on its declared C# type,
  * replicating NUnit's canonical test-name formatting.
+ *
+ * NUnit's suffix logic is driven by the runtime type of the TestCase argument:
+ *   - int literal (10)       → no suffix, even if param is decimal
+ *   - double literal (10.5)  → 'd' if param is decimal, 'f' if param is float
+ *   - explicit C# 'm' (10m) → 'd' (decimal literal)
+ *   - explicit C# 'f' (3f)  → 'f' (float literal)
  */
 export function formatParamValue(value: string, type: string): string {
     const v = value.trim();
@@ -238,12 +244,24 @@ export function formatParamValue(value: string, type: string): string {
 
     if (numMatch) {
         const numPart = numMatch[1];
-        if (lower === 'decimal') {
+        const sourceSuffix = numMatch[2].toLowerCase();
+
+        if (sourceSuffix === 'm') {
             return numPart + 'd';
         }
-        if (lower === 'float' || lower === 'single') {
+        if (sourceSuffix === 'f') {
             return numPart + 'f';
         }
+
+        if (numPart.includes('.')) {
+            if (lower === 'decimal') {
+                return numPart + 'd';
+            }
+            if (lower === 'float' || lower === 'single') {
+                return numPart + 'f';
+            }
+        }
+
         return numPart;
     }
 

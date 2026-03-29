@@ -256,6 +256,13 @@ export function formatParamValue(value: string, type: string): string {
         }
     }
 
+    if (/^[A-Za-z_]/.test(v) && !v.includes('(')) {
+        const dotIdx = v.lastIndexOf('.');
+        if (dotIdx !== -1) {
+            return v.substring(dotIdx + 1);
+        }
+    }
+
     return v;
 }
 

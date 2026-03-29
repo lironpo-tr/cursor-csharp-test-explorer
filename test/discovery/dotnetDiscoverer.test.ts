@@ -286,4 +286,32 @@ describe('formatParamValue', () => {
     it('should handle nullable decimal type', () => {
         expect(formatParamValue('10.5', 'decimal')).toBe('10.5d');
     });
+
+    it('should strip enum type prefix to match NUnit ToString()', () => {
+        expect(formatParamValue('MyEnum.Value', 'MyEnum')).toBe('Value');
+    });
+
+    it('should strip deeply qualified enum prefix', () => {
+        expect(formatParamValue('My.Namespace.EnumType.Active', 'EnumType')).toBe('Active');
+    });
+
+    it('should not strip prefix from typeof expressions', () => {
+        expect(formatParamValue('typeof(System.String)', 'Type')).toBe('typeof(System.String)');
+    });
+
+    it('should leave null unchanged for nullable decimal', () => {
+        expect(formatParamValue('null', 'decimal')).toBe('null');
+    });
+
+    it('should leave null unchanged for nullable string', () => {
+        expect(formatParamValue('null', 'string')).toBe('null');
+    });
+
+    it('should leave null unchanged for nullable bool', () => {
+        expect(formatParamValue('null', 'bool')).toBe('null');
+    });
+
+    it('should leave simple enum member without prefix unchanged', () => {
+        expect(formatParamValue('Active', 'MyEnum')).toBe('Active');
+    });
 });

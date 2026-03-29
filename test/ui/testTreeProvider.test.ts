@@ -196,6 +196,32 @@ describe('TestTreeProvider.buildTree', () => {
         expect(methodNode.children[1].nodeType).toBe('parameterizedCase');
     });
 
+    it('should create expandable parent node for TestCaseSource methods', () => {
+        const provider = buildSingleProjectTree('MyProject', [
+            makeTest('NS', 'Cls', 'DynamicTest', { hasDynamicSource: true }),
+        ]);
+
+        const classNode = provider.getRoots()[0].children[0].children[0];
+        const methodNode = classNode.children[0];
+
+        expect(methodNode.nodeType).toBe('method');
+        expect(methodNode.label).toBe('DynamicTest (dynamic)');
+        expect(methodNode.fqn).toBe('NS.Cls.DynamicTest');
+        expect(methodNode.children).toHaveLength(0);
+    });
+
+    it('should use baseFqn for TestCaseSource method nodes even without parameters', () => {
+        const provider = buildSingleProjectTree('MyProject', [
+            makeTest('NS', 'Cls', 'Generate', { hasDynamicSource: true }),
+        ]);
+
+        const classNode = provider.getRoots()[0].children[0].children[0];
+        const methodNode = classNode.children[0];
+
+        expect(methodNode.fqn).toBe('NS.Cls.Generate');
+        expect(methodNode.id).toContain('method:');
+    });
+
     it('should skip projects with no tests', () => {
         const provider = new TestTreeProvider();
         const project1 = makeProject('Empty', '/repo/Empty/Empty.csproj');
@@ -478,6 +504,35 @@ describe('TestTreeProvider.addDynamicCaseNode', () => {
 
         expect(result).toBeDefined();
         expect(result?.fqn).toBe('NS.Cls.Add(1, 2)');
+    });
+
+    it('should update parent label with child count when adding dynamic cases', () => {
+        const provider = buildSingleProjectTree('Proj', [
+            makeTest('NS', 'Cls', 'Add', { hasDynamicSource: true }),
+        ]);
+
+        provider.addDynamicCaseNode('NS.Cls.Add', 'NS.Cls.Add(1,2)', 'Add(1,2)');
+        provider.addDynamicCaseNode('NS.Cls.Add', 'NS.Cls.Add(3,4)', 'Add(3,4)');
+
+        const methodNode = provider.getNodeByFqn('NS.Cls.Add');
+        expect(methodNode).toBeDefined();
+        expect(methodNode!.children).toHaveLength(2);
+        expect(methodNode!.label).toBe('Add (2)');
+    });
+
+    it('should add dynamic case under a TestCaseSource method node', () => {
+        const provider = buildSingleProjectTree('Proj', [
+            makeTest('NS', 'Cls', 'Compute', { hasDynamicSource: true }),
+        ]);
+
+        const added = provider.addDynamicCaseNode('NS.Cls.Compute', 'NS.Cls.Compute(1)', 'Compute(1)');
+
+        expect(added).toBeDefined();
+        expect(added?.nodeType).toBe('parameterizedCase');
+
+        const methodNode = provider.getNodeByFqn('NS.Cls.Compute');
+        expect(methodNode!.children).toHaveLength(1);
+        expect(methodNode!.label).toBe('Compute (1)');
     });
 
     it('should not create duplicates for multiple params with whitespace differences', () => {

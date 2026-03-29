@@ -215,6 +215,19 @@ describe('parseMethodParamTypes', () => {
 
         expect(parseMethodParamTypes(line)).toEqual(['float', 'long', 'double']);
     });
+
+    it('should parse concatenated multi-line signature', () => {
+        const line =
+            'public void Validate( decimal rate, decimal etoroPrice, int precision, bool isBuy = false)';
+
+        expect(parseMethodParamTypes(line)).toEqual(['decimal', 'decimal', 'int', 'bool']);
+    });
+
+    it('should handle default parameter values', () => {
+        const line = 'public void MyTest(decimal rate, bool isBuy = false)';
+
+        expect(parseMethodParamTypes(line)).toEqual(['decimal', 'bool']);
+    });
 });
 
 describe('formatParamValue', () => {

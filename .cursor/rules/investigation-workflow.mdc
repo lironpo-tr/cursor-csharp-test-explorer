@@ -1,0 +1,86 @@
+---
+description: Workflow for issues that require exploration and investigation before implementation
+alwaysApply: true
+---
+
+# Investigation Workflow
+
+When a GitHub issue requires exploration or root-cause analysis before a fix can be planned, follow this workflow. This applies when the cause is unknown, the reproduction path is unclear, or the issue spans multiple components.
+
+## 1. Identify Investigation Issues
+
+An issue is an investigation issue when any of these are true:
+
+- The root cause is unknown or ambiguous.
+- The bug cannot be reproduced from the description alone.
+- Multiple components or systems may be involved.
+- The user or you explicitly frame the task as "investigate", "explore", or "look into".
+
+## 2. Create the Findings File
+
+Before starting any investigation, create a findings file:
+
+- **Location:** `.cursor/investigations/<issue-number>-<short-description>.md`
+- **Example:** `.cursor/investigations/45-testcase-duplicate-after-run.md`
+
+Initialize it with this template:
+
+```markdown
+# Investigation: #<issue-number> — <title>
+
+**Date started:** <YYYY-MM-DD>
+**Branch:** <branch-name>
+**Status:** In Progress | Concluded
+
+## Problem Statement
+<1-3 sentences restating the issue>
+
+## Hypotheses
+- [ ] <hypothesis 1>
+- [ ] <hypothesis 2>
+
+## Findings
+
+### <area or component explored>
+<what was found, with file paths and line references>
+
+## Root Cause
+<filled in when identified — leave blank until then>
+
+## Proposed Fix
+<filled in when a fix approach is clear — leave blank until then>
+```
+
+## 3. During Investigation
+
+As you explore the codebase, logs, or external systems:
+
+1. **Update the findings file continuously** — after each meaningful discovery, append to the `## Findings` section with the area explored and what was learned. Include file paths, line numbers, code snippets, and relevant data.
+2. **Check off or refine hypotheses** as evidence confirms or rules them out.
+3. **Keep findings structured** — use sub-headings under `## Findings` for each area explored so a future reader (or a new chat session) can quickly parse what was covered.
+
+## 4. Before Ending a Chat Session
+
+If the investigation is not yet complete and the chat context is getting large:
+
+1. Ensure the findings file is fully up to date with everything discovered so far.
+2. Add a `## Next Steps` section listing what remains to explore.
+3. Set `**Status:**` to `In Progress`.
+4. Commit the findings file: `chore: update investigation for #<issue-number>`.
+
+## 5. Resuming in a New Chat Session
+
+When the user opens a new chat to continue an investigation:
+
+1. Read the findings file from `.cursor/investigations/` for the relevant issue.
+2. Use it as the starting context — do not re-explore areas already covered.
+3. Continue from the `## Next Steps` section.
+
+## 6. Concluding the Investigation
+
+When the root cause is identified:
+
+1. Fill in `## Root Cause` and `## Proposed Fix`.
+2. Set `**Status:**` to `Concluded`.
+3. Commit the findings file.
+4. Proceed with the normal GitHub Issue Workflow (branch, implement, PR).

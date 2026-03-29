@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.8.2](https://github.com/lironpo-tr/cursor-csharp-test-explorer/compare/cursor-csharp-test-explorer-v0.8.1...cursor-csharp-test-explorer-v0.8.2) (2026-03-29)
+
+
+### Bug Fixes
+
+* prevent duplicate parameterized case nodes after test run ([b2360c2](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/b2360c2bb52d9375d320441db0cf518382ed2e56))
+* prevent duplicate parameterized case nodes after test run ([a6f79fc](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/a6f79fcac83260857fd22a4a610582de43599154))
+* quote dotnet test filter to prevent shell pipe interpretation ([b1bea1d](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/b1bea1deab494866bc736497408a7038214f707c))
+* quote dotnet test filter to prevent shell pipe interpretation ([67da624](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/67da624500fd6b2b1f36b084971ca0705884e2ad))
+
+
+### Miscellaneous
+
+* add investigation workflow rule for cross-session findings ([d26bf8a](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/d26bf8ab1f7f9d63dd213dc9ba02250538f516df))
+* add investigation workflow rule for cross-session findings ([a5dba0a](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/a5dba0a0b796f3d681822f6327a2295ded6f8ea9))
+* add VSIX release workflow rule ([ed922ef](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/ed922efbcbfc0c33061d61fc3c3c477d01e49164))
+* add VSIX release workflow rule ([09dc00b](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/09dc00b283ee1ea9b0540af1bb70e76037d20e0a))
+* improve investigation workflow with explore-first and pause-before-implementation ([d0584bf](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/d0584bff0eea7ff71382daa91dd451313c00cd5e))
+* improve investigation workflow with explore-first and pause-before-implementation ([73a6306](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/73a63067a731434a74b5732cb026506c4a27aa5a))
+
 ## [0.8.1](https://github.com/lironpo-tr/cursor-csharp-test-explorer/compare/cursor-csharp-test-explorer-v0.8.0...cursor-csharp-test-explorer-v0.8.1) (2026-03-28)
 
 

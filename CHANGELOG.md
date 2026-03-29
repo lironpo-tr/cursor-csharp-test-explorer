@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.1](https://github.com/lironpo-tr/cursor-csharp-test-explorer/compare/cursor-csharp-test-explorer-v0.9.0...cursor-csharp-test-explorer-v0.9.1) (2026-03-29)
+
+
+### Bug Fixes
+
+* use NUnit-canonical FQN for TestCase with TestName ([a0d79bb](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/a0d79bbc4a0a4b009bfc1d5689cb339061ac16ef))
+* use NUnit-canonical FQN for TestCase with TestName (Namespace.Class.TestName, no parens) ([fbe3011](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/fbe3011b9f48c3046801b6ec75f05286daa08a26))
+
 ## [0.9.0](https://github.com/lironpo-tr/cursor-csharp-test-explorer/compare/cursor-csharp-test-explorer-v0.8.6...cursor-csharp-test-explorer-v0.9.0) (2026-03-29)
 
 

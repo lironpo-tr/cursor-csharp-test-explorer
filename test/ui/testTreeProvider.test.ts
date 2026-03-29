@@ -449,6 +449,60 @@ describe('TestTreeProvider.addDynamicCaseNode', () => {
 
         expect(result).toBeUndefined();
     });
+
+    it('should return existing node when FQN differs only in parameter whitespace', () => {
+        const provider = buildSingleProjectTree('Proj', [
+            makeTest('NS', 'Cls', 'Add', {
+                fullyQualifiedName: 'NS.Cls.Add(1, 2)',
+                displayName: 'Add(1, 2)',
+                parameters: '1, 2',
+            }),
+        ]);
+
+        const result = provider.addDynamicCaseNode('NS.Cls.Add', 'NS.Cls.Add(1,2)', 'Add(1,2)');
+
+        expect(result).toBeDefined();
+        expect(result?.fqn).toBe('NS.Cls.Add(1, 2)');
+    });
+
+    it('should return existing node when caseFqn is short name and existing has full FQN', () => {
+        const provider = buildSingleProjectTree('Proj', [
+            makeTest('NS', 'Cls', 'Add', {
+                fullyQualifiedName: 'NS.Cls.Add(1, 2)',
+                displayName: 'Add(1, 2)',
+                parameters: '1, 2',
+            }),
+        ]);
+
+        const result = provider.addDynamicCaseNode('NS.Cls.Add', 'Add(1,2)', 'Add(1,2)');
+
+        expect(result).toBeDefined();
+        expect(result?.fqn).toBe('NS.Cls.Add(1, 2)');
+    });
+
+    it('should not create duplicates for multiple params with whitespace differences', () => {
+        const provider = buildSingleProjectTree('Proj', [
+            makeTest('NS', 'Cls', 'Calc', {
+                fullyQualifiedName: 'NS.Cls.Calc(1, 2, 3)',
+                displayName: 'Calc(1, 2, 3)',
+                parameters: '1, 2, 3',
+            }),
+            makeTest('NS', 'Cls', 'Calc', {
+                fullyQualifiedName: 'NS.Cls.Calc(4, 5, 6)',
+                displayName: 'Calc(4, 5, 6)',
+                parameters: '4, 5, 6',
+            }),
+        ]);
+
+        const result1 = provider.addDynamicCaseNode('NS.Cls.Calc', 'NS.Cls.Calc(1,2,3)', 'Calc(1,2,3)');
+        const result2 = provider.addDynamicCaseNode('NS.Cls.Calc', 'NS.Cls.Calc(4,5,6)', 'Calc(4,5,6)');
+
+        expect(result1?.fqn).toBe('NS.Cls.Calc(1, 2, 3)');
+        expect(result2?.fqn).toBe('NS.Cls.Calc(4, 5, 6)');
+
+        const methodNode = provider.getNodeByFqn('NS.Cls.Calc');
+        expect(methodNode!.children).toHaveLength(2);
+    });
 });
 
 describe('TestTreeProvider.getNodeById', () => {

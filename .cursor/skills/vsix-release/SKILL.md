@@ -1,6 +1,6 @@
 ---
-description: Workflow for building a new VSIX release version
-alwaysApply: true
+name: vsix-release
+description: Build and package a new VSIX release version. Use when the user asks to build a release, create a new version, package the VSIX, or publish the extension.
 ---
 
 # VSIX Release Workflow

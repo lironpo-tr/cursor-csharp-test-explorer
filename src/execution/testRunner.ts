@@ -216,7 +216,7 @@ async function executeTestRun(
     args.push('--results-directory', trxDir);
 
     if (filter) {
-        args.push('--filter', filter);
+        args.push('--filter', `"${filter}"`);
     }
 
     const extraArgs = getExtraArgs();

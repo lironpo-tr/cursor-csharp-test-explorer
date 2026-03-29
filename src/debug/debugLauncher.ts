@@ -39,7 +39,7 @@ export async function launchDebugSession(
 
     const filter = buildFilterForNode(node);
     if (filter) {
-        args.push('--filter', filter);
+        args.push('--filter', `"${filter}"`);
     }
 
     const extraArgs = getExtraArgs();

@@ -3,6 +3,7 @@ import {
     extractParameterArgs,
     parseMethodParamTypes,
     formatParamValue,
+    parseTestCaseArgs,
 } from '../../src/discovery/dotnetDiscoverer';
 import { DYNAMIC_SOURCE_ATTRIBUTE_REGEX } from '../../src/discovery/patterns';
 
@@ -340,5 +341,75 @@ describe('formatParamValue', () => {
 
     it('should leave simple enum member without prefix unchanged', () => {
         expect(formatParamValue('Active', 'MyEnum')).toBe('Active');
+    });
+});
+
+describe('parseTestCaseArgs', () => {
+    it('should return all args as positional when no named params', () => {
+        const result = parseTestCaseArgs('1, 2, 3');
+
+        expect(result.positionalArgs).toEqual(['1', '2', '3']);
+        expect(result.testName).toBeUndefined();
+    });
+
+    it('should strip TestName and extract its value', () => {
+        const result = parseTestCaseArgs(
+            '500, 10, -3, 10, -250, TestName = "Positive non margin amount"',
+        );
+
+        expect(result.positionalArgs).toEqual(['500', '10', '-3', '10', '-250']);
+        expect(result.testName).toBe('Positive non margin amount');
+    });
+
+    it('should strip ExpectedResult named param', () => {
+        const result = parseTestCaseArgs('1, 2, ExpectedResult = 3');
+
+        expect(result.positionalArgs).toEqual(['1', '2']);
+        expect(result.testName).toBeUndefined();
+    });
+
+    it('should strip Description named param', () => {
+        const result = parseTestCaseArgs('1, 2, Description = "my desc"');
+
+        expect(result.positionalArgs).toEqual(['1', '2']);
+    });
+
+    it('should handle TestName with special characters', () => {
+        const result = parseTestCaseArgs(
+            '500.4568, 10.5489, TestName = "Decimal parameters -> should round away from zero"',
+        );
+
+        expect(result.positionalArgs).toEqual(['500.4568', '10.5489']);
+        expect(result.testName).toBe(
+            'Decimal parameters -> should round away from zero',
+        );
+    });
+
+    it('should handle multiple named params', () => {
+        const result = parseTestCaseArgs(
+            '1, 2, TestName = "my test", Description = "some desc"',
+        );
+
+        expect(result.positionalArgs).toEqual(['1', '2']);
+        expect(result.testName).toBe('my test');
+    });
+
+    it('should handle TestName without spaces around equals', () => {
+        const result = parseTestCaseArgs('1, TestName="my test"');
+
+        expect(result.positionalArgs).toEqual(['1']);
+        expect(result.testName).toBe('my test');
+    });
+
+    it('should not treat negative numbers as named params', () => {
+        const result = parseTestCaseArgs('-1, -3.5, true');
+
+        expect(result.positionalArgs).toEqual(['-1', '-3.5', 'true']);
+    });
+
+    it('should not treat string literals as named params', () => {
+        const result = parseTestCaseArgs('"Name = value", 1');
+
+        expect(result.positionalArgs).toEqual(['"Name = value"', '1']);
     });
 });

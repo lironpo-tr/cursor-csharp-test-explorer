@@ -2,7 +2,7 @@
     "name": "cursor-csharp-test-explorer",
     "displayName": "C# Test Explorer",
     "description": "Discover, run, and debug C# tests (NUnit, xUnit, MSTest) with a sidebar tree view",
-    "version": "0.9.1",
+    "version": "0.9.2",
     "license": "MIT",
     "publisher": "lironpo",
     "repository": {

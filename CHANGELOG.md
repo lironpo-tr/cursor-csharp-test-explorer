@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.9.2](https://github.com/lironpo-tr/cursor-csharp-test-explorer/compare/cursor-csharp-test-explorer-v0.9.1...cursor-csharp-test-explorer-v0.9.2) (2026-03-29)
+
+
+### Bug Fixes
+
+* handle TestCaseSource tests as expandable parent nodes with dynamic case results ([f7b588b](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/f7b588b07324ca5ab2cce1f51c2e15e8dceb9ef5))
+* handle TestCaseSource tests as expandable parent nodes with dynamic case results ([f4361e4](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/f4361e4f18c9b2f0e0cc87b0a466fcda8b8f8a05)), closes [#70](https://github.com/lironpo-tr/cursor-csharp-test-explorer/issues/70)
+* skip commented-out tests during discovery ([748649a](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/748649a2d9db757905196fa3e2b9a4d96240a656))
+* skip commented-out tests during discovery ([f10944c](https://github.com/lironpo-tr/cursor-csharp-test-explorer/commit/f10944c21f5411f31f077997b14ca808071193b1)), closes [#71](https://github.com/lironpo-tr/cursor-csharp-test-explorer/issues/71)
+
 ## [0.9.1](https://github.com/lironpo-tr/cursor-csharp-test-explorer/compare/cursor-csharp-test-explorer-v0.9.0...cursor-csharp-test-explorer-v0.9.1) (2026-03-29)
 
 
